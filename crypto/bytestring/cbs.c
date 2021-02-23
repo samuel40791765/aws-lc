@@ -15,8 +15,12 @@
 #include <openssl/mem.h>
 #include <openssl/bytestring.h>
 
-#include <assert.h>
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
 #include <inttypes.h>
+
+#include <assert.h>
 #include <string.h>
 
 #include "internal.h"
