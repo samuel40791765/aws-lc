@@ -446,6 +446,9 @@ add_library(
   x509v3/v3_purp.c
   x509v3/v3_skey.c
   x509v3/v3_utl.c
+  ocsp/ocsp_asn.c
+  ocsp/ocsp_client.c
+  ocsp/ocsp_verify.c
 
   $<TARGET_OBJECTS:fipsmodule>
 
