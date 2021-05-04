@@ -3,7 +3,6 @@
 
 #include "ocsp_internal.h"
 
-
 OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,
                              const X509 *issuer)
 {
