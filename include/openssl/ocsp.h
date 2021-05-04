@@ -46,10 +46,10 @@ DECLARE_ASN1_FUNCTIONS(OCSP_CERTID)
 DECLARE_ASN1_FUNCTIONS(OCSP_SIGNATURE)
 
 /* Returns response status from |OCSP_RESPONSE| */
-int OCSP_response_status(OCSP_RESPONSE *resp);
+OPENSSL_EXPORT int OCSP_response_status(OCSP_RESPONSE *resp);
 
 /* Returns |OCSP_BASICRESP| from |OCSP_RESPONSE| */
-OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp);
+OPENSSL_EXPORT OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp);
 
 
 #ifdef __cplusplus
