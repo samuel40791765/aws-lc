@@ -120,41 +120,44 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
   OCSP_CERTID *cid = NULL;
   unsigned char md[EVP_MAX_MD_SIZE];
 
-  if ((cid = OCSP_CERTID_new()) == NULL)
+  if ((cid = OCSP_CERTID_new()) == NULL) {
     goto err;
+  }
 
-  alg = &cid->hashAlgorithm;
+  alg = cid->hashAlgorithm;
   ASN1_OBJECT_free(alg->algorithm);
   if ((nid = EVP_MD_type(dgst)) == NID_undef) {
     OPENSSL_PUT_ERROR(OCSP, OCSP_R_UNKNOWN_NID);
-    ERR_raise(ERR_LIB_OCSP, OCSP_R_UNKNOWN_NID);
     goto err;
   }
-  if ((alg->algorithm = OBJ_nid2obj(nid)) == NULL)
+  if ((alg->algorithm = OBJ_nid2obj(nid)) == NULL) {
     goto err;
-  if ((alg->parameter = ASN1_TYPE_new()) == NULL)
+  }
+  if ((alg->parameter = ASN1_TYPE_new()) == NULL) {
     goto err;
+  }
   alg->parameter->type = V_ASN1_NULL;
 
-  if (!X509_NAME_digest(issuerName, dgst, md, &i))
-    goto digerr;
-  if (!(ASN1_OCTET_STRING_set(&cid->issuerNameHash, md, i)))
+  if (!X509_NAME_digest(issuerName, dgst, md, &i)) {
+    OPENSSL_PUT_ERROR(OCSP, OCSP_R_DIGEST_ERR);
     goto err;
-
+  }
+  if (!(ASN1_OCTET_STRING_set(cid->issuerNameHash, md, i))) {
+    goto err;
+  }
   /* Calculate the issuerKey hash, excluding tag and length */
-  if (!EVP_Digest(issuerKey->data, issuerKey->length, md, &i, dgst, NULL))
+  if (!EVP_Digest(issuerKey->data, issuerKey->length, md, &i, dgst, NULL)) {
     goto err;
-
-  if (!(ASN1_OCTET_STRING_set(&cid->issuerKeyHash, md, i)))
+  }
+  if (!(ASN1_OCTET_STRING_set(cid->issuerKeyHash, md, i))) {
     goto err;
+  }
 
   if (serialNumber) {
-    if (ASN1_STRING_copy(&cid->serialNumber, serialNumber) == 0)
+    if (ASN1_STRING_copy(cid->serialNumber, serialNumber) == 0)
       goto err;
   }
   return cid;
-  digerr:
-  OPENSSL_PUT_ERROR(OCSP, OCSP_R_DIGEST_ERR);
   err:
   OCSP_CERTID_free(cid);
   return NULL;
