@@ -218,3 +218,19 @@ TEST(OCSPTest, TestBasic) {
   basic_response = bssl::UniquePtr<OCSP_BASICRESP>(OCSP_response_get1_basic(ocsp_response.get()));
   ASSERT_TRUE(basic_response);
 }
+
+TEST(OCSPTest, TestValidRespStatus) {
+  OCSP_RESPONSE *ocsp_response = NULL;
+  OCSP_BASICRESP *basic_response = NULL;
+
+  bssl::Span<const uint8_t> der = bssl::Span<const uint8_t>(ocsp_response_der);
+  const uint8_t *der_ptr = der.data();
+  ocsp_response = d2i_OCSP_RESPONSE(NULL, &der_ptr, der.size());
+  ASSERT_TRUE(ocsp_response);
+
+  int ocsp_status = OCSP_response_status(ocsp_response);
+  ASSERT_EQ(OCSP_RESPONSE_STATUS_SUCCESSFUL, ocsp_status);
+
+  basic_response = OCSP_response_get1_basic(ocsp_response);
+  ASSERT_TRUE(basic_response);
+}
