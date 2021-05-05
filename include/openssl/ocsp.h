@@ -81,6 +81,17 @@ OPENSSL_EXPORT int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, in
                           ASN1_GENERALIZEDTIME **thisupd,
                           ASN1_GENERALIZEDTIME **nextupd);
 
+
+/* Returns a |OCSP_CERTID| converted from a certificate and its issuer */
+OPENSSL_EXPORT OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,
+                                            const X509 *issuer);
+
+OPENSSL_EXPORT OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
+                                             const X509_NAME *issuerName,
+                                             const ASN1_BIT_STRING *issuerKey,
+                                             const ASN1_INTEGER *serialNumber);
+
+/* --- OCSP compare functions --- */
 /* Compares certificate id issuers, Returns 0 on equal. */
 OPENSSL_EXPORT int OCSP_id_issuer_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);
 
@@ -119,5 +130,8 @@ BSSL_NAMESPACE_END
 #define OCSP_R_NOT_BASIC_RESPONSE                 104
 #define OCSP_R_NO_RESPONSE_DATA                   108
 
+#define OCSP_R_DIGEST_ERR                         102
+#define OCSP_R_NOT_BASIC_RESPONSE                 104
+#define OCSP_R_NO_RESPONSE_DATA                   108
 
 #endif  // AWSLC_OCSP_H
