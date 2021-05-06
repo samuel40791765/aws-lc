@@ -4,8 +4,73 @@
 #include <gtest/gtest.h>
 
 #include "openssl/ocsp.h"
+#include "openssl/pem.h"
 
 #include "../internal.h"
+
+static const char ca_cert[] = R"(
+-----BEGIN CERTIFICATE-----
+MIIFODCCAyCgAwIBAgIJAIbNvSGMRNd3MA0GCSqGSIb3DQEBCwUAMCgxCzAJBgNV
+BAYTAlVTMQswCQYDVQQIDAJXQTEMMAoGA1UECgwDczJuMCAXDTE3MDkwNTA1MTUw
+NVoYDzIxMTcwODEyMDUxNTA1WjAoMQswCQYDVQQGEwJVUzELMAkGA1UECAwCV0Ex
+DDAKBgNVBAoMA3MybjCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAL44
+CoKiyb2g53V0t6j6TQPoaHWHDpT/o4rew8CNNDi+NrIBFtF5pPbtpBk8CBVtYkDw
+j6NJAdMDE8UsF67mSacyNmrDGGzaZFRsTAQU/eKfTiXJ5Y3mgmLBHtlnXJvd9IsZ
+dsPTIxt2ru4msJgC/kenBtOlaZE5Ux/W+vmNTEFDPfYz5sqh69oOdznMNHi9lnJ1
+C7HzhUDjcUy0D2iha3QHCXQfoMusgPOiewgEnT48j6hDKqXsRorFME19m4vGua+y
+fROZpl0qS1Uh7m62X59VLqGXK/Cs6PfSQG18hLzpMYvSMR/rI3bjdNmzwbOj7GEE
+4s6bAE34LSLo64imVukS6ha7LeJwh8vDD22P2aD4rDGiAN/mhXVC8qRr8wyXrIr2
+hUpp42iJVyzVHWDRkq4dU31xbNsj/89FEh+XOYiuM7ZgeHV/Ie89nr78vOfv0iCM
+gCFsykpFZ+8vDC22m6pGrl58VdY59d6jHtpNtQYWn1B5wxBx0ugPHd0uRyBvk8zr
+If9A60QsQ56F3imJC6dR+4R8M8t84Wm6sDQAVvjyYoy9u4e4rLXT5IMFHGjI7Vda
+hA0BmIBzBLfOb6ZUX2na0ckGvVu8DCrm9lJP1NYpHuQ3W2Hws1+rMD0URJqZy/D2
+bttPxVgT/5KqCSpmBjvsv2unTfxVbZInQQFtt70lAgMBAAGjYzBhMB0GA1UdDgQW
+BBQS34F1ccqS084bLCt3O54zd/P3bzAfBgNVHSMEGDAWgBQS34F1ccqS084bLCt3
+O54zd/P3bzAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBhjANBgkqhkiG
+9w0BAQsFAAOCAgEAs2C1eSchstZ7wUaOfJ4/4T2bzZ+aPpb9qR9rU+no8QpqW0TO
+P5JROba0mpD3oRrS8hEihp2UPpHII1JRqzytq5GHM6rW9sowxJqhhp46LxtAqIeL
+1k2PB53E9UIav4kf4C1eO32iO00ndK/fuWxku/95kIC7o5pQajCksEkeEoKx6oUp
+6Rt2KAGrEImpoEP4qqw3GN8GrntC0s+FfZYsrj/KTJcQQBg18g7UY6rj0db1OxbK
+K7USvQzPWh7c1mQPIFYfTnvn3KA14rUuWSW5NF9Eb6rwuczCWhzydvz94zeWMYrH
+uDwJLbtLBv6f6CPPmladG8BpGKBb3p9l8FzfvUVtAtpBFcPZ40HemNO50kU27blN
+mpvLCs6HcJ0/mgz+bVNDkkXyB1PSHbVqaWFJ4Sp/mo4liNgQBGgDfokC/4+hk30E
+Mn8wWjILbmdnqiUSXEwroEi1qNVv/PJ97ZBOpQx01dcftuCxBIrQSAp3bsbguOoi
+C/tAoGPsYpxHHffmHFD+2WZDrBYKwzl4S7j4/NRt57DdLZ8tdmLQoWyFPjmPyRJL
+FhIqLSrlmZgT2/FNOOYRgZ+Z4uaoEZVdZ9YLj6R+wW4NBi5K+sd1/R+R7Es9iQFq
+SYKXaJNh0sbvVOofX6/TqBapmcbVu3NbRnU6Csc2YgdY4WdN0G0ADWC0i8A=
+-----END CERTIFICATE-----
+)";
+
+static const char server_cert[] = R"(
+-----BEGIN CERTIFICATE-----
+MIIE2zCCAsOgAwIBAgICd3gwDQYJKoZIhvcNAQELBQAwKDELMAkGA1UEBhMCVVMx
+CzAJBgNVBAgMAldBMQwwCgYDVQQKDANzMm4wIBcNMTcwOTA1MDUzOTI1WhgPMjEx
+NzA4MTIwNTM5MjVaMEAxCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJXQTEMMAoGA1UE
+CgwDczJuMRYwFAYDVQQDDA1zMm4gVGVzdCBDZXJ0MIIBIjANBgkqhkiG9w0BAQEF
+AAOCAQ8AMIIBCgKCAQEAsdNiIHYethm112F5avA/cm2F34+Lv6/fnV5evNGqaV9e
+v35B0Bvi+0vMTax2RUj4KKAMXcznz+EzSKjaN5PezsZWe0JsM99swAYFNo3ckIly
+TYMu1kKfXY+7Yg2Tu1VaAbo7/KzGDEJtEDyQTDf/H97M2TMqqi+3yS2jK4dljjSN
+3Spcgsoe29rTaWI4TCBZhqvKvspMSX+2V5o386AlLawlIv/YGehmv8zTBHqEEOr9
+2B+AI+bmGiNT8aWNmAR0ogpUomttERwvcP/donY66tYvElqgObsTsRM09pYetej3
+ZYO7AsokT3m9LXTjS7hIOmUAtbwkSDpXrn6RpHG3KQIDAQABo4H0MIHxMAkGA1Ud
+EwQCMAAwEQYJYIZIAYb4QgEBBAQDAgZAMB0GA1UdDgQWBBQGLa0yYrqtRsHXNHv4
+/nSkq8GsVDBYBgNVHSMEUTBPgBQS34F1ccqS084bLCt3O54zd/P3b6EspCowKDEL
+MAkGA1UEBhMCVVMxCzAJBgNVBAgMAldBMQwwCgYDVQQKDANzMm6CCQCGzb0hjETX
+dzAOBgNVHQ8BAf8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwMwYIKwYBBQUH
+AQEEJzAlMCMGCCsGAQUFBzABhhdodHRwOi8vb2NzcC5zMm50ZXN0LmNvbTANBgkq
+hkiG9w0BAQsFAAOCAgEAk96vwb03XGRVsAgnaUS/xFmYt7C8mX2Ox1smokVr8e3R
+xYBQw8iUUJa+jchYOKnwpbpaJXQVzppxAm2X837dm7HvvVWhaGD7u7ZblCJ02fnq
+0Ry7CGNiiA3o+Bc7yZHLbbf7Vbgro4k0uoEoBHXUCkoRaPHOSzrB3qg6r2f9fPlt
+b617wBp+4gVmKe4R/it2rODsJ5Oev1nYec9qf/O3N1mmlQXCBVkjTnMQbpv/0uAh
+yS9crG93U0UkQE88v4L3je4YGpv7yJnkOCFn7TnwxrkWKR4FUZJw7LM5+DKTk6wQ
+ZqYpxfIxnOS/MRP+P+C0V2dKE51iXqPuCB5ocOdCEhGg4hqlzLtQyR5Ml4uWDMP9
+bN/CXTw+boffvlO34PnuRtNQ2GxkHOVqCvu0eiA74Da1jOoYteB3WHU4BZgxi918
+mT20kScJuwvPwhodbz2TFRqAY6azJABb8MXvh4ScXt/kpN+vMWSFs3UeBcIwBLY2
+7C0IxOpDbmfLpiDxQvY1AsVoHdwrcMiObVxW1Xgo3g6n+gOcZ3oOVv7nS50/N1Ds
+LMj6FcIAPjNOJLnekUyfke27AckGMgWiAHgSIWl2C4bezWSFNCit6SIIEZ+VtEL3
+KQyrfL8ymVro7xCn+piJ/kTCSLg3/6XNpJcFiHqrbtvDst44vXyjLKw9B0IKFcc=
+-----END CERTIFICATE-----
+)";
 
 static const uint8_t ocsp_response_der[] = {
     0x30, 0x82, 0x08, 0xb3, 0x0a, 0x01, 0x00, 0xa0, 0x82, 0x08, 0xac, 0x30,
@@ -196,9 +261,67 @@ static const uint8_t ocsp_response_der[] = {
     0xd5, 0x38, 0x22, 0xc8, 0x14, 0x5b, 0xb9, 0x5f, 0x50, 0x8b, 0x94 };
 
 
-static bssl::UniquePtr<OCSP_RESPONSE> LoadOCSP_RESPONSE(bssl::Span<const uint8_t> der) {
+static bssl::UniquePtr<OCSP_RESPONSE> LoadOCSP_RESPONSE(
+    bssl::Span<const uint8_t> der) {
   const uint8_t *ptr = der.data();
   return bssl::UniquePtr<OCSP_RESPONSE>(d2i_OCSP_RESPONSE(nullptr, &ptr, der.size()));
+}
+
+//static bssl::UniquePtr<X509> LoadX509(bssl::Span<const uint8_t> der) {
+//  const uint8_t *ptr = der.data();
+//  return bssl::UniquePtr<X509>(d2i_X509(nullptr, &ptr, der.size()));
+//}
+
+static bssl::UniquePtr<STACK_OF(X509)> CertsToStack(
+    const std::vector<X509 *> &certs) {
+  bssl::UniquePtr<STACK_OF(X509)> stack(sk_X509_new_null());
+  if (!stack) {
+    return nullptr;
+  }
+  for (auto cert : certs) {
+    if (!bssl::PushToStack(stack.get(), bssl::UpRef(cert))) {
+      return nullptr;
+    }
+  }
+  return stack;
+}
+
+static bool PEMToDER(bssl::UniquePtr<uint8_t> *out, size_t *out_len,
+                     const char *pem) {
+  bssl::UniquePtr<BIO> bio(BIO_new_mem_buf(pem, strlen(pem)));
+  if (!bio) {
+    return false;
+  }
+
+  char *name, *header;
+  uint8_t *data;
+  long data_len;
+  if (!PEM_read_bio(bio.get(), &name, &header, &data, &data_len)) {
+    fprintf(stderr, "failed to read PEM data.\n");
+    return false;
+  }
+  OPENSSL_free(name);
+  OPENSSL_free(header);
+
+  out->reset(data);
+  *out_len = data_len;
+  return true;
+}
+
+static bssl::UniquePtr<X509> LoadX509fromPEM(const char *pem) {
+  size_t data_len;
+  bssl::UniquePtr<uint8_t> data;
+  if(!PEMToDER(&data, &data_len, pem)){
+    return nullptr;
+  }
+
+  bssl::UniquePtr<CRYPTO_BUFFER> buf(
+      CRYPTO_BUFFER_new(data.get(), data_len, nullptr));
+  if(!buf){
+    return nullptr;
+  }
+
+  return bssl::UniquePtr<X509>(X509_parse_from_buffer(buf.get()));
 }
 
 TEST(OCSPTest, TestBasic) {
@@ -215,3 +338,39 @@ TEST(OCSPTest, TestBasic) {
   ASSERT_TRUE(basic_response);
 }
 
+TEST(OCSPTest, TestRespFindStatus) {
+  bssl::UniquePtr<OCSP_RESPONSE> ocsp_response;
+  bssl::UniquePtr<OCSP_BASICRESP> basic_response;
+
+  ocsp_response = LoadOCSP_RESPONSE(ocsp_response_der);
+  ASSERT_TRUE(ocsp_response);
+
+  int ocsp_status = OCSP_response_status(ocsp_response.get());
+  ASSERT_EQ(OCSP_RESPONSE_STATUS_SUCCESSFUL, ocsp_status);
+
+  basic_response = bssl::UniquePtr<OCSP_BASICRESP>(OCSP_response_get1_basic(ocsp_response.get()));
+  ASSERT_TRUE(basic_response);
+
+  /* set up trust store and certificate chain */
+  bssl::UniquePtr<X509_STORE> trust_store(X509_STORE_new());
+  X509_STORE_add_cert(trust_store.get(),LoadX509fromPEM(ca_cert).get());
+  bssl::UniquePtr<STACK_OF(X509)> server_cert_chain = CertsToStack(
+      {LoadX509fromPEM(server_cert).get(),LoadX509fromPEM(ca_cert).get()});;
+
+  X509 *subject = sk_X509_value(server_cert_chain.get(), 0);
+  X509 *issuer = nullptr;
+  /* find the issuer in the chain. If it's not there. Fail everything. */
+  for (size_t i = 0; i < sk_X509_num(server_cert_chain.get()); i++) {
+    X509 *issuer_candidate = sk_X509_value(server_cert_chain.get(), i);
+    ASSERT_TRUE(issuer_candidate);
+    const int issuer_value = X509_check_issued(issuer_candidate, subject);
+
+    if (issuer_value == X509_V_OK) {
+      issuer = issuer_candidate;
+      break;
+    }
+  }
+
+  OCSP_CERTID *cert_id = OCSP_cert_to_id(EVP_sha1(), subject, issuer);
+  ASSERT_TRUE(cert_id);
+}
