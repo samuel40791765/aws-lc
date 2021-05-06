@@ -371,6 +371,6 @@ TEST(OCSPTest, TestRespFindStatus) {
     }
   }
 
-  OCSP_CERTID *cert_id = OCSP_cert_to_id(EVP_sha1(), subject, issuer);
+  bssl::UniquePtr<OCSP_CERTID> cert_id = bssl::UniquePtr<OCSP_CERTID>(OCSP_cert_to_id(EVP_sha1(), subject, issuer));
   ASSERT_TRUE(cert_id);
 }
