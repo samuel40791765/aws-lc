@@ -370,7 +370,18 @@ TEST(OCSPTest, TestRespFindStatus) {
       break;
     }
   }
+  ASSERT_TRUE(issuer);
 
+  /* Expect basic verify here, but we skip the step for now because functionality has not been implemented yet */
+
+  int status = 0;
+  int reason = 0;
   bssl::UniquePtr<OCSP_CERTID> cert_id = bssl::UniquePtr<OCSP_CERTID>(OCSP_cert_to_id(EVP_sha1(), subject, issuer));
   ASSERT_TRUE(cert_id);
+
+  ASN1_GENERALIZEDTIME *revtime, *thisupd, *nextupd;
+  /* Actual verification of the response */
+  const int ocsp_resp_find_status_res = OCSP_resp_find_status(basic_response.get(), cert_id.get(), &status, &reason, &revtime, &thisupd, &nextupd);
+  ASSERT_EQ(1, ocsp_resp_find_status_res);
+  ASSERT_EQ(V_OCSP_CERTSTATUS_GOOD, status);
 }
