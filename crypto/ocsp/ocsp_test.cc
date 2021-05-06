@@ -8,6 +8,10 @@
 
 #include "../internal.h"
 
+/*
+ * Test data below are taken from s2n's ocsp test files:
+ * https://github.com/aws/s2n-tls/blob/main/tests/pems/ocsp
+ */
 static const char ca_cert[] = R"(
 -----BEGIN CERTIFICATE-----
 MIIFODCCAyCgAwIBAgIJAIbNvSGMRNd3MA0GCSqGSIb3DQEBCwUAMCgxCzAJBgNV
@@ -72,10 +76,6 @@ KQyrfL8ymVro7xCn+piJ/kTCSLg3/6XNpJcFiHqrbtvDst44vXyjLKw9B0IKFcc=
 -----END CERTIFICATE-----
 )";
 
-/*
- * Taken from s2n's ocsp der response test file:
- * https://github.com/aws/s2n-tls/blob/main/tests/pems/ocsp/ocsp_response.der
- */
 static const uint8_t ocsp_response_der[] = {
     0x30, 0x82, 0x08, 0xb3, 0x0a, 0x01, 0x00, 0xa0, 0x82, 0x08, 0xac, 0x30,
     0x82, 0x08, 0xa8, 0x06, 0x09, 0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30,
