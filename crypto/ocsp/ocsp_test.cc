@@ -24,6 +24,11 @@ static const time_t valid_after_ocsp_update_time_sha256 = 1622145764;
 static const time_t valid_before_ocsp_expire_time_sha256 = 1937505762;
 static const time_t invalid_after_ocsp_expire_time_sha256 = 1937505764;
 
+#define OCSP_VERIFYSTATUS_SUCCESS                   1
+#define OCSP_VERIFYSTATUS_ERROR                     0
+#define OCSP_VERIFYSTATUS_FATALERROR                1
+
+
 static const char ca_cert[] = R"(
 -----BEGIN CERTIFICATE-----
 MIIFODCCAyCgAwIBAgIJAIbNvSGMRNd3MA0GCSqGSIb3DQEBCwUAMCgxCzAJBgNV
@@ -1416,7 +1421,7 @@ TEST(OCSPTest, TestGoodOCSP) {
                             OCSP_RESPONSE_STATUS_SUCCESSFUL,
                             ca_cert,
                             server_cert,
-                            1,
+                            OCSP_VERIFYSTATUS_SUCCESS,
                             &basic_response,
                             &server_cert_chain);
 
@@ -1464,7 +1469,7 @@ TEST(OCSPTest, TestDefaultHash) {
                             OCSP_RESPONSE_STATUS_SUCCESSFUL,
                             ca_cert,
                             server_cert,
-                            1,
+                            OCSP_VERIFYSTATUS_SUCCESS,
                             &basic_response,
                             &server_cert_chain);
 
@@ -1492,7 +1497,7 @@ TEST(OCSPTest, TestGoodOCSPbyCA) {
                             OCSP_RESPONSE_STATUS_SUCCESSFUL,
                             ca_cert,
                             server_cert,
-                            1,
+                            OCSP_VERIFYSTATUS_SUCCESS,
                             &basic_response,
                             &server_cert_chain);
 
@@ -1516,7 +1521,7 @@ TEST(OCSPTest, TestRevokedOCSP) {
                             OCSP_RESPONSE_STATUS_SUCCESSFUL,
                             ca_cert,
                             server_cert,
-                            1,
+                            OCSP_VERIFYSTATUS_SUCCESS,
                             &basic_response,
                             &server_cert_chain);
 
@@ -1549,7 +1554,7 @@ TEST(OCSPTest, TestUntrustedDataOCSP) {
                             OCSP_RESPONSE_STATUS_SUCCESSFUL,
                             ca_cert,
                             server_cert,
-                            0,
+                            OCSP_VERIFYSTATUS_ERROR,
                             &basic_response,
                             &server_cert_chain);
 }
@@ -1564,7 +1569,7 @@ TEST(OCSPTest, TestNotRequestedOCSP) {
                             OCSP_RESPONSE_STATUS_SUCCESSFUL,
                             ca_cert,
                             server_ecdsa_cert,
-                            1,
+                            OCSP_VERIFYSTATUS_SUCCESS,
                             &basic_response,
                             &server_cert_chain);
 
@@ -1590,7 +1595,7 @@ TEST(OCSPTest, TestNotValidResponseOCSP) {
                             OCSP_RESPONSE_STATUS_SUCCESSFUL,
                             ca_cert,
                             server_ecdsa_cert,
-                            0,
+                            OCSP_VERIFYSTATUS_ERROR,
                             &basic_response,
                             &server_cert_chain);
 }
@@ -1604,7 +1609,7 @@ TEST(OCSPTest, TestGoodOCSP_SHA256) {
                             OCSP_RESPONSE_STATUS_SUCCESSFUL,
                             ca_cert,
                             server_cert,
-                            1,
+                            OCSP_VERIFYSTATUS_SUCCESS,
                             &basic_response,
                             &server_cert_chain);
 
@@ -1651,7 +1656,7 @@ TEST(OCSPTest, TestRevokedOCSP_SHA256) {
                             OCSP_RESPONSE_STATUS_SUCCESSFUL,
                             ca_cert,
                             server_cert,
-                            1,
+                            OCSP_VERIFYSTATUS_SUCCESS,
                             &basic_response,
                             &server_cert_chain);
 
@@ -1677,7 +1682,7 @@ TEST(OCSPTest, TestNotRequestedOCSP_SHA256) {
                             OCSP_RESPONSE_STATUS_SUCCESSFUL,
                             ca_cert,
                             server_ecdsa_cert,
-                            1,
+                            OCSP_VERIFYSTATUS_SUCCESS,
                             &basic_response,
                             &server_cert_chain);
 
@@ -1703,7 +1708,7 @@ TEST(OCSPTest, TestNotValidResponseOCSP_SHA256) {
                             OCSP_RESPONSE_STATUS_SUCCESSFUL,
                             ca_cert,
                             server_cert,
-                            0,
+                            OCSP_VERIFYSTATUS_ERROR,
                             &basic_response,
                             &server_cert_chain);
 }
