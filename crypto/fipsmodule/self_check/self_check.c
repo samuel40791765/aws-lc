@@ -596,6 +596,10 @@ int boringssl_fips_self_test(
   uint8_t aes_iv[16];
   uint8_t output[256];
 
+  // FIPS struct experiment @sachiang
+  int counter = awslc_fips_service_indicator_get_counter();
+  // end experiment
+
   // AES-CBC Encryption KAT
   memcpy(aes_iv, kAESIV, sizeof(kAESIV));
   if (AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key) != 0) {
@@ -609,6 +613,18 @@ int boringssl_fips_self_test(
     goto err;
   }
 
+  // FIPS struct experiment @sachiang
+  if (awslc_fips_check_service_approved(counter)) {
+    fprintf(stderr, "APPROVED!!\n");
+  }
+  else {
+    fprintf(stderr, "NOT APPROVED!!\n");
+  }
+
+  counter = awslc_fips_service_indicator_get_counter();
+  // end experiment
+
+
   // AES-CBC Decryption KAT
   memcpy(aes_iv, kAESIV, sizeof(kAESIV));
   if (AES_set_decrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key) != 0) {
@@ -621,6 +637,17 @@ int boringssl_fips_self_test(
                   "AES-CBC Decryption KAT")) {
     goto err;
   }
+
+  // FIPS struct experiment @sachiang
+  if (awslc_fips_check_service_approved(counter)) {
+    fprintf(stderr, "APPROVED!!\n");
+  }
+  else {
+    fprintf(stderr, "NOT APPROVED!!\n");
+  }
+
+  counter = awslc_fips_service_indicator_get_counter();
+  // end experiment
 
   size_t out_len;
   uint8_t nonce[EVP_AEAD_MAX_NONCE_LENGTH];
@@ -640,6 +667,15 @@ int boringssl_fips_self_test(
     fprintf(stderr, "EVP_AEAD_CTX_seal for AES-128-GCM failed.\n");
     goto err;
   }
+
+  // FIPS struct experiment @sachiang
+  if (awslc_fips_check_service_approved(counter)) {
+    fprintf(stderr, "APPROVED!!\n");
+  }
+  else {
+    fprintf(stderr, "NOT APPROVED!!\n");
+  }
+  // end experiment
 
   // AES-GCM Decryption KAT
   if (!EVP_AEAD_CTX_open(&aead_ctx, output, &out_len, sizeof(output), nonce,

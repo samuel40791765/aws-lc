@@ -90,6 +90,19 @@ void AES_ecb_encrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key,
 
 void AES_cbc_encrypt(const uint8_t *in, uint8_t *out, size_t len,
                      const AES_KEY *key, uint8_t *ivec, const int enc) {
+  // FIPS struct experiment @sachiang
+  // Flipping the switch here for now.
+  switch(key->rounds) {
+    case 9:
+    case 11:
+    case 13:
+      awslc_fips_service_indicator_inc_counter();
+      break;
+    default:
+      break;
+  }
+  // end experiment
+
   if (hwaes_capable()) {
     aes_hw_cbc_encrypt(in, out, len, key, ivec, enc);
     return;

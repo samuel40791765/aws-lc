@@ -161,6 +161,38 @@ OPENSSL_EXPORT void OPENSSL_cleanup(void);
 // |BORINGSSL_FIPS| and zero otherwise.
 OPENSSL_EXPORT int FIPS_mode_set(int on);
 
+// FIPS struct experiment @sachiang
+
+//#if defined(BORINGSSL_FIPS)
+
+//#define AWSLC_FIPS_VERIFY_SERVICE_INDICATOR(func(...), err_return_val) \
+//    func(...);                                                         \
+//    if (awslc_check_service_indicator() == AWSLC_FIPS_SERVICE_INDICATOR_NOT_APPROVED) {                \
+//        awslc_reset_service_indicator();                               \
+//        return (err_return_val);                                       \
+//    }                                                                  \
+//    awslc_reset_service_indicator();
+//
+//#define AWSLC_FIPS_GET_SERVICE_INDICATOR(func(...), service_indicator) \
+//    func(...);                                                         \
+//    service_indicator = awslc_get_service_indicator();                 \
+//    awslc_reset_service_indicator();
+
+OPENSSL_EXPORT int awslc_fips_service_indicator_get_counter(void);
+OPENSSL_EXPORT void awslc_fips_service_indicator_reset_counter(void);
+OPENSSL_EXPORT int awslc_fips_check_service_approved(int counter);
+
+// #else
+
+//#define AWSLC_FIPS_VERIFY_SERVICE_INDICATOR(func(...), err_return_val) func(...);
+//
+//#define AWSLC_FIPS_GET_SERVICE_INDICATOR(func(...), service_indicator) \
+//    func(...);                                                         \
+//    service_indicator = AWSLC_FIPS_SERVICE_INDICATOR_APPROVED;
+
+// #endif // defined(BORINGSSL_FIPS)
+
+// end experiment
 
 #if defined(__cplusplus)
 }  // extern C

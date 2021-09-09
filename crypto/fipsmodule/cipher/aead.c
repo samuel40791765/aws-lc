@@ -116,6 +116,19 @@ int EVP_AEAD_CTX_seal(const EVP_AEAD_CTX *ctx, uint8_t *out, size_t *out_len,
                       size_t max_out_len, const uint8_t *nonce,
                       size_t nonce_len, const uint8_t *in, size_t in_len,
                       const uint8_t *ad, size_t ad_len) {
+  // FIPS struct experiment @sachiang
+  // Flipping the switch here for now. (Intended only for AES-GCM here right now)
+  switch(EVP_AEAD_key_length(ctx->aead)) {
+    case 16:
+    case 32:
+      awslc_fips_service_indicator_inc_counter();
+      break;
+    default:
+      fprintf(stderr, "length: %zu\n", EVP_AEAD_key_length(ctx->aead));
+      break;
+  }
+  // end experiment
+
   if (in_len + ctx->aead->overhead < in_len /* overflow */) {
     OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_TOO_LARGE);
     goto error;
