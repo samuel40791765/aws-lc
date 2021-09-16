@@ -113,6 +113,7 @@ void AES_ecb_encrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key,
   } else {
     AES_decrypt(in, out, key);
   }
+  AES_verify_service_indicator(key->rounds, ECB);
 }
 
 void AES_cbc_encrypt(const uint8_t *in, uint8_t *out, size_t len,

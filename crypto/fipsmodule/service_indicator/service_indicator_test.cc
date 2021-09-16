@@ -54,6 +54,15 @@ static int check_test(const uint8_t *expected, const uint8_t *actual,
   return 1;
 }
 
+static const uint8_t kAESECBCiphertext[64] = {
+    0x87, 0x2d, 0x98, 0xc2, 0xcc, 0x31, 0x5b, 0x41, 0xe0, 0xfa, 0x7b,
+    0x0a, 0x71, 0xc0, 0x42, 0xbf, 0xf8, 0xe7, 0xf0, 0x72, 0x37, 0x7a,
+    0xb6, 0x7a, 0x4e, 0x83, 0x30, 0xb4, 0x63, 0x83, 0x95, 0xce, 0xbc,
+    0x8c, 0xfb, 0x9f, 0xd9, 0x6d, 0x0e, 0xa0, 0x7a, 0x64, 0x09, 0x17,
+    0x0d, 0xa4, 0x78, 0x24, 0x35, 0x7b, 0xe6, 0x40, 0x2e, 0x2c, 0x1a,
+    0x68, 0x39, 0x5b, 0x28, 0xb9, 0x4b, 0x5e, 0x67, 0x34
+};
+
 static const uint8_t kAESCBCCiphertext[64] = {
     0x87, 0x2d, 0x98, 0xc2, 0xcc, 0x31, 0x5b, 0x41, 0xe0, 0xfa, 0x7b,
     0x0a, 0x71, 0xc0, 0x42, 0xbf, 0x4f, 0x61, 0xd0, 0x0d, 0x58, 0x8c,
@@ -93,6 +102,50 @@ TEST(ServiceIndicatorTest, BasicTest) {
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(counter,(uint64_t)1);
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_GCM);
+}
+
+TEST(ServiceIndicatorTest, AESECB) {
+  int approved = 0;
+  uint32_t serviceID = 0;
+
+  AES_KEY aes_key;
+  uint8_t output[256];
+
+  // AES-CBC Encryption KAT
+  if (AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key) != 0) {
+    fprintf(stderr, "AES_set_encrypt_key failed.\n");
+    return;
+  }
+
+  // AES_ecb_encrypt encrypts (or decrypts) a single, 16 byte block from in to out.
+  for (uint32_t j = 0; j < sizeof(kPlaintext) / AES_BLOCK_SIZE; j++) {
+    IS_FIPS_APPROVED_CALL_SERVICE(approved,
+      AES_ecb_encrypt(&kPlaintext[j * AES_BLOCK_SIZE], &output[j * AES_BLOCK_SIZE], &aes_key, AES_ENCRYPT));
+    ASSERT_TRUE(approved);
+  }
+  if (!check_test(kAESECBCiphertext, output, sizeof(kAESECBCiphertext),
+                  "AES-ECB Encryption KAT")) {
+    return;
+  }
+  serviceID = awslc_fips_service_indicator_get_serviceID();
+  ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_ECB);
+
+  // AES-ECB Decryption KAT
+  if (AES_set_decrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key) != 0) {
+    fprintf(stderr, "AES_set_decrypt_key failed.\n");
+    return;
+  }
+  for (uint32_t j = 0; j < sizeof(kPlaintext) / AES_BLOCK_SIZE; j++) {
+    IS_FIPS_APPROVED_CALL_SERVICE(approved,
+      AES_ecb_encrypt(&kAESECBCiphertext[j * AES_BLOCK_SIZE], &output[j * AES_BLOCK_SIZE], &aes_key, AES_DECRYPT));
+    ASSERT_TRUE(approved);
+  }
+  if (!check_test(kPlaintext, output, sizeof(kPlaintext),
+                  "AES-ECB Decryption KAT")) {
+    return;
+  }
+  serviceID = awslc_fips_service_indicator_get_serviceID();
+  ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_ECB);
 }
 
 TEST(ServiceIndicatorTest, AESCBC) {
