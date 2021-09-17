@@ -63,6 +63,15 @@ static const uint8_t kAESECBCiphertext[64] = {
     0x68, 0x39, 0x5b, 0x28, 0xb9, 0x4b, 0x5e, 0x67, 0x34
 };
 
+static const uint8_t kAESCTRCiphertext[64] = {
+    0xe0, 0xd1, 0xe9, 0xf5, 0x9a, 0x7c, 0x2d, 0x6f, 0xa2, 0x3d, 0x11,
+    0x48, 0xc0, 0x32, 0xb6, 0xf9, 0x4c, 0xd4, 0x1b, 0xdd, 0x20, 0x06,
+    0x59, 0x6d, 0x7d, 0x0c, 0x77, 0xf6, 0x05, 0xf3, 0x15, 0x18, 0x71,
+    0xc7, 0xe1, 0x7d, 0x79, 0xde, 0x1e, 0x4d, 0xa5, 0x05, 0xe2, 0xe2,
+    0x8c, 0xb0, 0xa4, 0xa2, 0xa2, 0x82, 0x98, 0x9e, 0xd9, 0x15, 0xc2,
+    0xce, 0x00, 0x9e, 0x4b, 0x0b, 0x3a, 0x6a, 0xf7, 0x48
+};
+
 static const uint8_t kAESCBCCiphertext[64] = {
     0x87, 0x2d, 0x98, 0xc2, 0xcc, 0x31, 0x5b, 0x41, 0xe0, 0xfa, 0x7b,
     0x0a, 0x71, 0xc0, 0x42, 0xbf, 0x4f, 0x61, 0xd0, 0x0d, 0x58, 0x8c,
@@ -189,6 +198,36 @@ TEST(ServiceIndicatorTest, AESCBC) {
   ASSERT_TRUE(approved);
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_CBC);
+}
+
+TEST(ServiceIndicatorTest, AESCTR) {
+  int approved = 0;
+  uint32_t serviceID = 0;
+
+  AES_KEY aes_key;
+  uint8_t aes_iv[16];
+  uint8_t output[256];
+  unsigned num = 0;
+  uint8_t ecount_buf[AES_BLOCK_SIZE];
+
+  // AES-CBC Encryption KAT
+  memcpy(aes_iv, kAESIV, sizeof(kAESIV));
+  ASSERT_EQ(AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
+  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_ctr128_encrypt(kPlaintext, output,
+                             sizeof(kPlaintext), &aes_key, aes_iv, ecount_buf, &num));
+  ASSERT_TRUE(check_test(kAESCTRCiphertext, output, sizeof(kAESCTRCiphertext), "AES-CTR Encryption KAT"));
+  ASSERT_TRUE(approved);
+  serviceID = awslc_fips_service_indicator_get_serviceID();
+  ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_CTR);
+
+  // AES-CTR Decryption KAT
+  memcpy(aes_iv, kAESIV, sizeof(kAESIV));
+  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_ctr128_encrypt(kAESCTRCiphertext, output,
+                         sizeof(kAESCTRCiphertext), &aes_key, aes_iv, ecount_buf, &num));
+  ASSERT_TRUE(check_test(kPlaintext, output, sizeof(kPlaintext), "AES-CTR Decryption KAT"));
+  ASSERT_TRUE(approved);
+  serviceID = awslc_fips_service_indicator_get_serviceID();
+  ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_CTR);
 }
 
 TEST(ServiceIndicatorTest, AESGCM) {

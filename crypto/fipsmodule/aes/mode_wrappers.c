@@ -101,6 +101,7 @@ void AES_ctr128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
     CRYPTO_ctr128_encrypt_ctr32(in, out, len, key, ivec, ecount_buf, num,
                                 aes_nohw_ctr32_encrypt_blocks);
   }
+  AES_verify_service_indicator(key->rounds, CTR);
 }
 
 void AES_ecb_encrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key,
