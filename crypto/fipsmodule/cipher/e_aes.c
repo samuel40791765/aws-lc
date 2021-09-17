@@ -112,18 +112,39 @@ static void vpaes_ctr32_encrypt_blocks_with_bsaes(const uint8_t *in,
 }
 #endif  // BSAES
 
-// Only internal IVs are approved. If the nonce length has been set to 0,
-// that means we're using internal IV mode.
-#define AES_GCM_verify_service_indicator(key_length)                        \
+// Only 128 and 256 bit keys with internal IVs are approved for AES-GCM and AES-GMAC
+#define AES_GCM_verify_service_indicator(iv_gen, key_rounds, mode)          \
+do {                                                                        \
+  if((iv_gen) == 1) {                                                       \
+    switch (key_rounds) {                                                   \
+      case 9:                                                               \
+      case 10:                                                              \
+        awslc_fips_service_indicator_update_state(                          \
+            FIPS_APPROVED_EVP_AES_128_##mode);                              \
+        break;                                                              \
+      case 13:                                                              \
+      case 14:                                                              \
+        awslc_fips_service_indicator_update_state(                          \
+            FIPS_APPROVED_EVP_AES_256_##mode);                              \
+        break;                                                              \
+      default:                                                              \
+        break;                                                              \
+    }                                                                       \
+  }                                                                         \
+}                                                                           \
+while(0)                                                                    \
+
+// AEAD APIs work with different parameters.
+#define AEAD_verify_service_indicator(key_length, mode)                     \
 do {                                                                        \
   switch (key_length) {                                                     \
     case 16:                                                                \
       awslc_fips_service_indicator_update_state(                            \
-          FIPS_APPROVED_EVP_AES_128_GCM);                                   \
+          FIPS_APPROVED_EVP_AES_128_##mode);                                \
       break;                                                                \
     case 32:                                                                \
       awslc_fips_service_indicator_update_state(                            \
-          FIPS_APPROVED_EVP_AES_256_GCM);                                   \
+          FIPS_APPROVED_EVP_AES_256_##mode);                                \
       break;                                                                \
     default:                                                                \
       break;                                                                \
@@ -265,6 +286,8 @@ static int aes_cbc_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
     CRYPTO_cbc128_decrypt(in, out, len, &dat->ks.ks, ctx->iv, dat->block);
   }
 
+  // service indicator check.
+  AES_verify_service_indicator(dat->ks.ks.rounds, CBC);
   return 1;
 }
 
@@ -282,6 +305,8 @@ static int aes_ecb_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
     (*dat->block)(in + i, out + i, &dat->ks.ks);
   }
 
+  // service indicator check.
+  AES_verify_service_indicator(dat->ks.ks.rounds, ECB);
   return 1;
 }
 
@@ -296,6 +321,9 @@ static int aes_ctr_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
     CRYPTO_ctr128_encrypt(in, out, len, &dat->ks.ks, ctx->iv, ctx->buf,
                           &ctx->num, dat->block);
   }
+
+  // service indicator check.
+  AES_verify_service_indicator(dat->ks.ks.rounds, CTR);
   return 1;
 }
 
@@ -599,6 +627,7 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
         }
       }
     }
+    AES_GCM_verify_service_indicator(gctx->iv_gen,gctx->ks.ks.rounds, GCM);
     return len;
   } else {
     if (!ctx->encrypt) {
@@ -613,6 +642,7 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
     gctx->taglen = 16;
     // Don't reuse the IV
     gctx->iv_set = 0;
+    AES_GCM_verify_service_indicator(gctx->iv_gen,gctx->ks.ks.rounds, GMAC);
     return 0;
   }
 }
@@ -1211,7 +1241,12 @@ static int aead_aes_gcm_seal_scatter_randnonce(
   memcpy(out_tag + *out_tag_len, nonce, sizeof(nonce));
   *out_tag_len += sizeof(nonce);
   // service indicator check.
-  AES_GCM_verify_service_indicator(EVP_AEAD_key_length(ctx->aead));
+  if(in != NULL) {
+    AEAD_verify_service_indicator(EVP_AEAD_key_length(ctx->aead), GCM);
+  }
+  else{
+    AEAD_verify_service_indicator(EVP_AEAD_key_length(ctx->aead), GMAC);
+  }
   return 1;
 }
 
@@ -1235,7 +1270,12 @@ static int aead_aes_gcm_open_gather_randnonce(
   const struct aead_aes_gcm_ctx *gcm_ctx =
       (const struct aead_aes_gcm_ctx *)&ctx->state;
   // service indicator check.
-  AES_GCM_verify_service_indicator(EVP_AEAD_key_length(ctx->aead));
+  if(in != NULL) {
+    AEAD_verify_service_indicator(EVP_AEAD_key_length(ctx->aead), GCM);
+  }
+  else{
+    AEAD_verify_service_indicator(EVP_AEAD_key_length(ctx->aead), GMAC);
+  }
   return aead_aes_gcm_open_gather_impl(
       gcm_ctx, out, nonce, AES_GCM_NONCE_LENGTH, in, in_len, in_tag,
       in_tag_len - AES_GCM_NONCE_LENGTH, ad, ad_len,
