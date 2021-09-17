@@ -10,7 +10,6 @@ extern "C" {
 
 OPENSSL_EXPORT uint64_t awslc_fips_service_indicator_get_counter(void);
 OPENSSL_EXPORT uint32_t awslc_fips_service_indicator_get_serviceID(void);
-OPENSSL_EXPORT int awslc_fips_service_indicator_reset_state(void);
 
 #if defined(AWSLC_FIPS)
 #define IS_FIPS_APPROVED_CALL_SERVICE(approved, func)                       \
@@ -18,7 +17,7 @@ OPENSSL_EXPORT int awslc_fips_service_indicator_reset_state(void);
     (approved) = 0;                                                         \
     uint64_t counter = awslc_fips_service_indicator_get_counter();          \
     func;                                                                   \
-    if (awslc_fips_service_indicator_get_counter() > counter) {             \
+    if (awslc_fips_service_indicator_get_counter() != counter) {            \
         (approved) = 1;                                                     \
     }                                                                       \
  }                                                                          \
