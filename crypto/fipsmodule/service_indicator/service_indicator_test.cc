@@ -121,38 +121,25 @@ TEST(ServiceIndicatorTest, AESECB) {
   uint8_t output[256];
 
   // AES-CBC Encryption KAT
-  if (AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key) != 0) {
-    fprintf(stderr, "AES_set_encrypt_key failed.\n");
-    return;
-  }
-
+  ASSERT_EQ(AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
   // AES_ecb_encrypt encrypts (or decrypts) a single, 16 byte block from in to out.
   for (uint32_t j = 0; j < sizeof(kPlaintext) / AES_BLOCK_SIZE; j++) {
     IS_FIPS_APPROVED_CALL_SERVICE(approved,
       AES_ecb_encrypt(&kPlaintext[j * AES_BLOCK_SIZE], &output[j * AES_BLOCK_SIZE], &aes_key, AES_ENCRYPT));
     ASSERT_TRUE(approved);
   }
-  if (!check_test(kAESECBCiphertext, output, sizeof(kAESECBCiphertext),
-                  "AES-ECB Encryption KAT")) {
-    return;
-  }
+  ASSERT_TRUE(check_test(kAESECBCiphertext, output, sizeof(kAESECBCiphertext), "AES-ECB Encryption KAT"));
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_ECB);
 
   // AES-ECB Decryption KAT
-  if (AES_set_decrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key) != 0) {
-    fprintf(stderr, "AES_set_decrypt_key failed.\n");
-    return;
-  }
+  ASSERT_EQ(AES_set_decrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
   for (uint32_t j = 0; j < sizeof(kPlaintext) / AES_BLOCK_SIZE; j++) {
     IS_FIPS_APPROVED_CALL_SERVICE(approved,
       AES_ecb_encrypt(&kAESECBCiphertext[j * AES_BLOCK_SIZE], &output[j * AES_BLOCK_SIZE], &aes_key, AES_DECRYPT));
     ASSERT_TRUE(approved);
   }
-  if (!check_test(kPlaintext, output, sizeof(kPlaintext),
-                  "AES-ECB Decryption KAT")) {
-    return;
-  }
+  ASSERT_TRUE(check_test(kPlaintext, output, sizeof(kPlaintext), "AES-ECB Decryption KAT"));
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_ECB);
 }
@@ -167,34 +154,20 @@ TEST(ServiceIndicatorTest, AESCBC) {
 
   // AES-CBC Encryption KAT
   memcpy(aes_iv, kAESIV, sizeof(kAESIV));
-  if (AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key) != 0) {
-    fprintf(stderr, "AES_set_encrypt_key failed.\n");
-    return;
-  }
-
+  ASSERT_EQ(AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
   IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_cbc_encrypt(kPlaintext, output,
                               sizeof(kPlaintext), &aes_key, aes_iv, AES_ENCRYPT));
-  if (!check_test(kAESCBCCiphertext, output, sizeof(kAESCBCCiphertext),
-                  "AES-CBC Encryption KAT")) {
-    return;
-  }
+  ASSERT_TRUE(check_test(kAESCBCCiphertext, output, sizeof(kAESCBCCiphertext), "AES-CBC Encryption KAT"));
   ASSERT_TRUE(approved);
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_CBC);
 
   // AES-CBC Decryption KAT
   memcpy(aes_iv, kAESIV, sizeof(kAESIV));
-  if (AES_set_decrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key) != 0) {
-    fprintf(stderr, "AES_set_decrypt_key failed.\n");
-    return;
-  }
-
+  ASSERT_EQ(AES_set_decrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
   IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_cbc_encrypt(kAESCBCCiphertext, output,
                         sizeof(kAESCBCCiphertext), &aes_key, aes_iv, AES_DECRYPT));
-  if (!check_test(kPlaintext, output, sizeof(kPlaintext),
-                  "AES-CBC Decryption KAT")) {
-    return;
-  }
+  ASSERT_TRUE(check_test(kPlaintext, output, sizeof(kPlaintext), "AES-CBC Decryption KAT"));
   ASSERT_TRUE(approved);
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_CBC);
@@ -254,10 +227,8 @@ TEST(ServiceIndicatorTest, AESGCM) {
   // AES-GCM Decryption
   IS_FIPS_APPROVED_CALL_SERVICE(approved,EVP_AEAD_CTX_open(aead_ctx.get(),
       decrypt_output, &out2_len, sizeof(decrypt_output), nullptr, 0, encrypt_output, out_len, nullptr, 0));
-  if (!check_test(kPlaintext, decrypt_output, sizeof(kPlaintext),
-                  "AES-GCM Decryption for Internal IVs")) {
-    return;
-  }
+  ASSERT_TRUE(check_test(kPlaintext, decrypt_output, sizeof(kPlaintext),
+                  "AES-GCM Decryption for Internal IVs"));
   ASSERT_TRUE(approved);
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_GCM);
