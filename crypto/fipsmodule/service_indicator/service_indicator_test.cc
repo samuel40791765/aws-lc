@@ -86,6 +86,26 @@ static const uint8_t kAESCBCCiphertext[64] = {
 #endif
 };
 
+static const uint8_t kAESKWCiphertext[72] ={
+    0x10, 0x93, 0xe7, 0xc2, 0x68, 0xf3, 0x23, 0xfb, 0x40, 0xc2, 0xa1,
+    0x84, 0x03, 0x3b, 0x2e, 0x01, 0x34, 0x48, 0x70, 0x3c, 0xe7, 0x2f,
+    0xc1, 0x6c, 0x57, 0x91, 0x2d, 0x1f, 0xef, 0xea, 0x11, 0xb9, 0x00,
+    0x3e, 0x4b, 0x64, 0xbd, 0x29, 0xeb, 0xe6, 0xee, 0xa5, 0x60, 0xf0,
+    0x58, 0xca, 0x48, 0x73, 0x52, 0x94, 0xf2, 0x65, 0xb0, 0x7f, 0xe6,
+    0x2e, 0x90, 0x72, 0x21, 0x30, 0x90, 0x48, 0xa9, 0x76, 0x16, 0x59,
+    0x75, 0x0b, 0xa7, 0xe9, 0xfa, 0x42
+};
+
+static const uint8_t kAESKWPCiphertext[72] ={
+    0x24, 0xca, 0x22, 0xf4, 0x92, 0xac, 0x88, 0x96, 0x53, 0x17, 0x3f,
+    0x83, 0xd9, 0xa7, 0xe2, 0x85, 0x68, 0xac, 0x2d, 0xac, 0x08, 0x84,
+    0xe6, 0x41, 0x01, 0x60, 0x3a, 0x49, 0x05, 0x45, 0x3b, 0x0c, 0x4d,
+    0x81, 0xb9, 0x7d, 0x1a, 0x97, 0x1b, 0xcd, 0xd8, 0xd5, 0x10, 0x42,
+    0x2f, 0x07, 0x9b, 0x16, 0x9d, 0x7c, 0xb0, 0x7f, 0xaf, 0x38, 0x57,
+    0x4b, 0xbf, 0xf8, 0x08, 0x1e, 0x33, 0x58, 0x37, 0xd9, 0xfc, 0xc7,
+    0xa5, 0x66, 0xe5, 0x62, 0x2a, 0x01
+};
+
 TEST(ServiceIndicatorTest, BasicTest) {
   int approved = 0;
   uint32_t serviceID = 0;
@@ -120,7 +140,8 @@ TEST(ServiceIndicatorTest, AESECB) {
       AES_ecb_encrypt(&kPlaintext[j * AES_BLOCK_SIZE], &output[j * AES_BLOCK_SIZE], &aes_key, AES_ENCRYPT));
     ASSERT_TRUE(approved);
   }
-  ASSERT_TRUE(check_test(kAESECBCiphertext, output, sizeof(kAESECBCiphertext), "AES-ECB Encryption KAT"));
+  ASSERT_TRUE(check_test(kAESECBCiphertext, output, sizeof(kAESECBCiphertext),
+                         "AES-ECB Encryption KAT"));
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_ECB);
 
@@ -131,7 +152,8 @@ TEST(ServiceIndicatorTest, AESECB) {
       AES_ecb_encrypt(&kAESECBCiphertext[j * AES_BLOCK_SIZE], &output[j * AES_BLOCK_SIZE], &aes_key, AES_DECRYPT));
     ASSERT_TRUE(approved);
   }
-  ASSERT_TRUE(check_test(kPlaintext, output, sizeof(kPlaintext), "AES-ECB Decryption KAT"));
+  ASSERT_TRUE(check_test(kPlaintext, output, sizeof(kPlaintext),
+                         "AES-ECB Decryption KAT"));
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_ECB);
 }
@@ -149,7 +171,8 @@ TEST(ServiceIndicatorTest, AESCBC) {
   ASSERT_EQ(AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
   IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_cbc_encrypt(kPlaintext, output,
                               sizeof(kPlaintext), &aes_key, aes_iv, AES_ENCRYPT));
-  ASSERT_TRUE(check_test(kAESCBCCiphertext, output, sizeof(kAESCBCCiphertext), "AES-CBC Encryption KAT"));
+  ASSERT_TRUE(check_test(kAESCBCCiphertext, output, sizeof(kAESCBCCiphertext),
+                         "AES-CBC Encryption KAT"));
   ASSERT_TRUE(approved);
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_CBC);
@@ -159,7 +182,8 @@ TEST(ServiceIndicatorTest, AESCBC) {
   ASSERT_EQ(AES_set_decrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
   IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_cbc_encrypt(kAESCBCCiphertext, output,
                         sizeof(kAESCBCCiphertext), &aes_key, aes_iv, AES_DECRYPT));
-  ASSERT_TRUE(check_test(kPlaintext, output, sizeof(kPlaintext), "AES-CBC Decryption KAT"));
+  ASSERT_TRUE(check_test(kPlaintext, output, sizeof(kPlaintext),
+                         "AES-CBC Decryption KAT"));
   ASSERT_TRUE(approved);
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_CBC);
@@ -180,7 +204,8 @@ TEST(ServiceIndicatorTest, AESCTR) {
   ASSERT_EQ(AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
   IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_ctr128_encrypt(kPlaintext, output,
                              sizeof(kPlaintext), &aes_key, aes_iv, ecount_buf, &num));
-  ASSERT_TRUE(check_test(kAESCTRCiphertext, output, sizeof(kAESCTRCiphertext), "AES-CTR Encryption KAT"));
+  ASSERT_TRUE(check_test(kAESCTRCiphertext, output, sizeof(kAESCTRCiphertext),
+                         "AES-CTR Encryption KAT"));
   ASSERT_TRUE(approved);
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_CTR);
@@ -189,7 +214,8 @@ TEST(ServiceIndicatorTest, AESCTR) {
   memcpy(aes_iv, kAESIV, sizeof(kAESIV));
   IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_ctr128_encrypt(kAESCTRCiphertext, output,
                          sizeof(kAESCTRCiphertext), &aes_key, aes_iv, ecount_buf, &num));
-  ASSERT_TRUE(check_test(kPlaintext, output, sizeof(kPlaintext), "AES-CTR Decryption KAT"));
+  ASSERT_TRUE(check_test(kPlaintext, output, sizeof(kPlaintext),
+                         "AES-CTR Decryption KAT"));
   ASSERT_TRUE(approved);
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_CTR);
@@ -224,6 +250,63 @@ TEST(ServiceIndicatorTest, AESGCM) {
   ASSERT_TRUE(approved);
   serviceID = awslc_fips_service_indicator_get_serviceID();
   ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_GCM);
+}
+
+TEST(ServiceIndicatorTest, AESKW) {
+  int approved = 0;
+  uint32_t serviceID = 0;
+
+  AES_KEY aes_key;
+  uint8_t output[256];
+
+  // AES-KW Encryption KAT
+  ASSERT_EQ(AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
+  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_wrap_key(&aes_key, nullptr,
+                                    output, kPlaintext, sizeof(kPlaintext)));
+  ASSERT_TRUE(check_test(kAESKWCiphertext, output, sizeof(kAESKWCiphertext),
+                         "AES-KW Encryption KAT"));
+  ASSERT_TRUE(approved);
+  serviceID = awslc_fips_service_indicator_get_serviceID();
+  ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_KW);
+
+  // AES-KW Decryption KAT
+  ASSERT_EQ(AES_set_decrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
+  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_unwrap_key(&aes_key, nullptr,
+                                    output, kAESKWCiphertext, sizeof(kAESKWCiphertext)));
+  ASSERT_TRUE(check_test(kPlaintext, output, sizeof(kPlaintext),
+                         "AES-KW Decryption KAT"));
+  ASSERT_TRUE(approved);
+  serviceID = awslc_fips_service_indicator_get_serviceID();
+  ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_KW);
+}
+
+TEST(ServiceIndicatorTest, AESKWP) {
+  int approved = 0;
+  uint32_t serviceID = 0;
+
+  AES_KEY aes_key;
+  uint8_t output[256];
+  size_t outlen;
+  // AES-KWP Encryption KAT
+  memset(output, 0, 256);
+  ASSERT_EQ(AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
+  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_wrap_key_padded(&aes_key,
+              output, &outlen, sizeof(kPlaintext) + 15, kPlaintext, sizeof(kPlaintext)));
+  ASSERT_TRUE(check_test(kAESKWPCiphertext, output, sizeof(kAESKWPCiphertext),
+                         "AES-KWP Encryption KAT"));
+  ASSERT_TRUE(approved);
+  serviceID = awslc_fips_service_indicator_get_serviceID();
+  ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_KWP);
+
+  // AES-KWP Decryption KAT
+  ASSERT_EQ(AES_set_decrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
+  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_unwrap_key_padded(&aes_key,
+             output, &outlen, sizeof(kPlaintext), kPlaintext, sizeof(kPlaintext)));
+  ASSERT_TRUE(check_test(kPlaintext, output, outlen,
+                         "AES-KW Decryption KAT"));
+  ASSERT_TRUE(approved);
+  serviceID = awslc_fips_service_indicator_get_serviceID();
+  ASSERT_EQ(serviceID, FIPS_APPROVED_EVP_AES_128_KWP);
 }
 
 #else

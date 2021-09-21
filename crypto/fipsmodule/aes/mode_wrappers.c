@@ -52,7 +52,6 @@
 
 #include "../aes/internal.h"
 #include "../modes/internal.h"
-#include "../service_indicator/internal.h"
 
 void AES_ctr128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
                         const AES_KEY *key, uint8_t ivec[AES_BLOCK_SIZE],
