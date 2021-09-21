@@ -112,46 +112,6 @@ static void vpaes_ctr32_encrypt_blocks_with_bsaes(const uint8_t *in,
 }
 #endif  // BSAES
 
-// Only 128 and 256 bit keys with internal IVs are approved for AES-GCM and AES-GMAC
-#define AES_GCM_verify_service_indicator(iv_gen, key_rounds, mode)          \
-do {                                                                        \
-  if((iv_gen) == 1) {                                                       \
-    switch (key_rounds) {                                                   \
-      case 9:                                                               \
-      case 10:                                                              \
-        awslc_fips_service_indicator_update_state(                          \
-            FIPS_APPROVED_EVP_AES_128_##mode);                              \
-        break;                                                              \
-      case 13:                                                              \
-      case 14:                                                              \
-        awslc_fips_service_indicator_update_state(                          \
-            FIPS_APPROVED_EVP_AES_256_##mode);                              \
-        break;                                                              \
-      default:                                                              \
-        break;                                                              \
-    }                                                                       \
-  }                                                                         \
-}                                                                           \
-while(0)                                                                    \
-
-// AEAD APIs work with different parameters.
-#define AEAD_verify_service_indicator(key_length, mode)                     \
-do {                                                                        \
-  switch (key_length) {                                                     \
-    case 16:                                                                \
-      awslc_fips_service_indicator_update_state(                            \
-          FIPS_APPROVED_EVP_AES_128_##mode);                                \
-      break;                                                                \
-    case 32:                                                                \
-      awslc_fips_service_indicator_update_state(                            \
-          FIPS_APPROVED_EVP_AES_256_##mode);                                \
-      break;                                                                \
-    default:                                                                \
-      break;                                                                \
-  }                                                                         \
-}                                                                           \
-while(0)                                                                    \
-
 typedef struct {
   union {
     double align;
@@ -862,7 +822,6 @@ static int aes_hw_ecb_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out,
   }
 
   aes_hw_ecb_encrypt(in, out, len, ctx->cipher_data, ctx->encrypt);
-
   return 1;
 }
 

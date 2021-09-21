@@ -3,6 +3,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/service_indicator.h>
+#include "internal.h"
 
 #if defined(AWSLC_FIPS)
 static int awslc_fips_service_indicator_init_state(void) {
