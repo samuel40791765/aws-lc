@@ -589,7 +589,6 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
         }
       }
     }
-    AES_GCM_verify_service_indicator(gctx->iv_gen,gctx->ks.ks.rounds, GCM);
     return len;
   } else {
     if (!ctx->encrypt) {
@@ -604,7 +603,6 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
     gctx->taglen = 16;
     // Don't reuse the IV
     gctx->iv_set = 0;
-    AES_GCM_verify_service_indicator(gctx->iv_gen,gctx->ks.ks.rounds, GMAC);
     return 0;
   }
 }
