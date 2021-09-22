@@ -38,7 +38,7 @@ static const uint8_t kPlaintext[64] = {
 static const uint8_t kAESIV[16] = {0};
 
 static bool DoCipher(EVP_CIPHER_CTX *ctx, std::vector<uint8_t> *out,
-                     bssl::Span<const uint8_t> in, bool expect_approved) {
+                     bssl::Span<const uint8_t> in) {
   int approved = 0;
   size_t max_out = in.size();
   if ((EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_NO_PADDING) == 0 &&
@@ -52,14 +52,9 @@ static bool DoCipher(EVP_CIPHER_CTX *ctx, std::vector<uint8_t> *out,
   int len;
   while (!in.empty()) {
     // Check if EVP_Cipher service is approved.
-    IS_FIPS_APPROVED_CALL_SERVICE(approved, EVP_CipherUpdate(ctx,
+    CALL_SERVICE_AND_CHECK_APPROVED(approved, EVP_CipherUpdate(ctx,
                        out->data() + total, &len, in.data(), in.size()));
-    if(expect_approved) {
-      EXPECT_TRUE(approved);
-    }
-    else {
-      EXPECT_FALSE(approved);
-    }
+    EXPECT_TRUE(approved);
 
     EXPECT_GE(len, 0);
     total += static_cast<size_t>(len);
@@ -78,8 +73,7 @@ static void TestOperation(const EVP_CIPHER *cipher, bool encrypt,
                           const std::vector<uint8_t> &key,
                           const std::vector<uint8_t> &iv,
                           const std::vector<uint8_t> &plaintext,
-                          const std::vector<uint8_t> &ciphertext,
-                          bool expect_approved) {
+                          const std::vector<uint8_t> &ciphertext) {
   const std::vector<uint8_t> *in, *out;
   if (encrypt) {
     in = &plaintext;
@@ -108,7 +102,7 @@ static void TestOperation(const EVP_CIPHER *cipher, bool encrypt,
 
   ASSERT_TRUE(EVP_CIPHER_CTX_set_padding(ctx, 0));
   std::vector<uint8_t> result;
-  ASSERT_TRUE(DoCipher(ctx, &result, *in, expect_approved));
+  ASSERT_TRUE(DoCipher(ctx, &result, *in));
   EXPECT_EQ(Bytes(*out), Bytes(result));
 }
 
@@ -229,15 +223,13 @@ TEST_P(EVP_ServiceIndicatorTest, EVP_Ciphers) {
   if(t.has_iv) {
     iv.insert(iv.begin(), std::begin(kAESIV), std::end(kAESIV));
   }
-  TestOperation(cipher,true /* encrypt */, key, iv, plaintext, ciphertext, t.expect_approved);
-  TestOperation(cipher,false /* decrypt */, key, iv, plaintext, ciphertext, t.expect_approved);
+  TestOperation(cipher,true /* encrypt */, key, iv, plaintext, ciphertext);
+  TestOperation(cipher,false /* decrypt */, key, iv, plaintext, ciphertext);
 }
 
 
 TEST(ServiceIndicatorTest, BasicTest) {
   int approved = 0;
-  uint64_t counter = FIPS_service_indicator_get_counter();
-  ASSERT_EQ(sizeof(counter), (uint64_t)8);
 
   // Call an approved service.
   bssl::ScopedEVP_AEAD_CTX aead_ctx;
@@ -245,7 +237,7 @@ TEST(ServiceIndicatorTest, BasicTest) {
   size_t out_len;
   ASSERT_TRUE(EVP_AEAD_CTX_init(aead_ctx.get(), EVP_aead_aes_128_gcm_randnonce(),
                                 kAESKey, sizeof(kAESKey), 0, nullptr));
-  IS_FIPS_APPROVED_CALL_SERVICE(approved, EVP_AEAD_CTX_seal(aead_ctx.get(),
+  CALL_SERVICE_AND_CHECK_APPROVED(approved, EVP_AEAD_CTX_seal(aead_ctx.get(),
           output, &out_len, sizeof(output), nullptr, 0, kPlaintext, sizeof(kPlaintext), nullptr, 0));
   ASSERT_TRUE(approved);
 }
@@ -260,7 +252,7 @@ TEST(ServiceIndicatorTest, AESECB) {
   ASSERT_EQ(AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
   // AES_ecb_encrypt encrypts (or decrypts) a single, 16 byte block from in to out.
   for (uint32_t j = 0; j < sizeof(kPlaintext) / AES_BLOCK_SIZE; j++) {
-    IS_FIPS_APPROVED_CALL_SERVICE(approved,
+    CALL_SERVICE_AND_CHECK_APPROVED(approved,
       AES_ecb_encrypt(&kPlaintext[j * AES_BLOCK_SIZE], &output[j * AES_BLOCK_SIZE], &aes_key, AES_ENCRYPT));
     ASSERT_TRUE(approved);
   }
@@ -270,7 +262,7 @@ TEST(ServiceIndicatorTest, AESECB) {
   // AES-ECB Decryption KAT
   ASSERT_EQ(AES_set_decrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
   for (uint32_t j = 0; j < sizeof(kPlaintext) / AES_BLOCK_SIZE; j++) {
-    IS_FIPS_APPROVED_CALL_SERVICE(approved,
+    CALL_SERVICE_AND_CHECK_APPROVED(approved,
       AES_ecb_encrypt(&kAESECBCiphertext[j * AES_BLOCK_SIZE], &output[j * AES_BLOCK_SIZE], &aes_key, AES_DECRYPT));
     ASSERT_TRUE(approved);
   }
@@ -287,7 +279,7 @@ TEST(ServiceIndicatorTest, AESCBC) {
   // AES-CBC Encryption KAT
   memcpy(aes_iv, kAESIV, sizeof(kAESIV));
   ASSERT_EQ(AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
-  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_cbc_encrypt(kPlaintext, output,
+  CALL_SERVICE_AND_CHECK_APPROVED(approved,AES_cbc_encrypt(kPlaintext, output,
                               sizeof(kPlaintext), &aes_key, aes_iv, AES_ENCRYPT));
   ASSERT_TRUE(check_test(kAESCBCCiphertext, output, sizeof(kAESCBCCiphertext),
                          "AES-CBC Encryption KAT"));
@@ -296,7 +288,7 @@ TEST(ServiceIndicatorTest, AESCBC) {
   // AES-CBC Decryption KAT
   memcpy(aes_iv, kAESIV, sizeof(kAESIV));
   ASSERT_EQ(AES_set_decrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
-  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_cbc_encrypt(kAESCBCCiphertext, output,
+  CALL_SERVICE_AND_CHECK_APPROVED(approved,AES_cbc_encrypt(kAESCBCCiphertext, output,
                         sizeof(kAESCBCCiphertext), &aes_key, aes_iv, AES_DECRYPT));
   ASSERT_TRUE(check_test(kPlaintext, output, sizeof(kPlaintext),
                          "AES-CBC Decryption KAT"));
@@ -315,7 +307,7 @@ TEST(ServiceIndicatorTest, AESCTR) {
   // AES-CBC Encryption KAT
   memcpy(aes_iv, kAESIV, sizeof(kAESIV));
   ASSERT_EQ(AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
-  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_ctr128_encrypt(kPlaintext, output,
+  CALL_SERVICE_AND_CHECK_APPROVED(approved,AES_ctr128_encrypt(kPlaintext, output,
                              sizeof(kPlaintext), &aes_key, aes_iv, ecount_buf, &num));
   ASSERT_TRUE(check_test(kAESCTRCiphertext, output, sizeof(kAESCTRCiphertext),
                          "AES-CTR Encryption KAT"));
@@ -323,7 +315,7 @@ TEST(ServiceIndicatorTest, AESCTR) {
 
   // AES-CTR Decryption KAT
   memcpy(aes_iv, kAESIV, sizeof(kAESIV));
-  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_ctr128_encrypt(kAESCTRCiphertext, output,
+  CALL_SERVICE_AND_CHECK_APPROVED(approved,AES_ctr128_encrypt(kAESCTRCiphertext, output,
                          sizeof(kAESCTRCiphertext), &aes_key, aes_iv, ecount_buf, &num));
   ASSERT_TRUE(check_test(kPlaintext, output, sizeof(kPlaintext),
                          "AES-CTR Decryption KAT"));
@@ -342,12 +334,12 @@ TEST(ServiceIndicatorTest, AESGCM) {
                                 kAESKey, sizeof(kAESKey), 0, nullptr));
 
   // AES-GCM Encryption
-  IS_FIPS_APPROVED_CALL_SERVICE(approved,EVP_AEAD_CTX_seal(aead_ctx.get(),
+  CALL_SERVICE_AND_CHECK_APPROVED(approved,EVP_AEAD_CTX_seal(aead_ctx.get(),
       encrypt_output, &out_len, sizeof(encrypt_output), nullptr, 0, kPlaintext, sizeof(kPlaintext), nullptr, 0));
   ASSERT_TRUE(approved);
   
   // AES-GCM Decryption
-  IS_FIPS_APPROVED_CALL_SERVICE(approved,EVP_AEAD_CTX_open(aead_ctx.get(),
+  CALL_SERVICE_AND_CHECK_APPROVED(approved,EVP_AEAD_CTX_open(aead_ctx.get(),
       decrypt_output, &out2_len, sizeof(decrypt_output), nullptr, 0, encrypt_output, out_len, nullptr, 0));
   ASSERT_TRUE(check_test(kPlaintext, decrypt_output, sizeof(kPlaintext),
                   "AES-GCM Decryption for Internal IVs"));
@@ -362,7 +354,7 @@ TEST(ServiceIndicatorTest, AESKW) {
 
   // AES-KW Encryption KAT
   ASSERT_EQ(AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
-  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_wrap_key(&aes_key, nullptr,
+  CALL_SERVICE_AND_CHECK_APPROVED(approved,AES_wrap_key(&aes_key, nullptr,
                                     output, kPlaintext, sizeof(kPlaintext)));
   ASSERT_TRUE(check_test(kAESKWCiphertext, output, sizeof(kAESKWCiphertext),
                          "AES-KW Encryption KAT"));
@@ -370,7 +362,7 @@ TEST(ServiceIndicatorTest, AESKW) {
 
   // AES-KW Decryption KAT
   ASSERT_EQ(AES_set_decrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
-  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_unwrap_key(&aes_key, nullptr,
+  CALL_SERVICE_AND_CHECK_APPROVED(approved,AES_unwrap_key(&aes_key, nullptr,
                                     output, kAESKWCiphertext, sizeof(kAESKWCiphertext)));
   ASSERT_TRUE(check_test(kPlaintext, output, sizeof(kPlaintext),
                          "AES-KW Decryption KAT"));
@@ -386,7 +378,7 @@ TEST(ServiceIndicatorTest, AESKWP) {
   // AES-KWP Encryption KAT
   memset(output, 0, 256);
   ASSERT_EQ(AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
-  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_wrap_key_padded(&aes_key,
+  CALL_SERVICE_AND_CHECK_APPROVED(approved,AES_wrap_key_padded(&aes_key,
               output, &outlen, sizeof(kPlaintext) + 15, kPlaintext, sizeof(kPlaintext)));
   ASSERT_TRUE(check_test(kAESKWPCiphertext, output, sizeof(kAESKWPCiphertext),
                          "AES-KWP Encryption KAT"));
@@ -394,7 +386,7 @@ TEST(ServiceIndicatorTest, AESKWP) {
 
   // AES-KWP Decryption KAT
   ASSERT_EQ(AES_set_decrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
-  IS_FIPS_APPROVED_CALL_SERVICE(approved,AES_unwrap_key_padded(&aes_key,
+  CALL_SERVICE_AND_CHECK_APPROVED(approved,AES_unwrap_key_padded(&aes_key,
              output, &outlen, sizeof(kPlaintext), kPlaintext, sizeof(kPlaintext)));
   ASSERT_TRUE(check_test(kPlaintext, output, outlen,
                          "AES-KW Decryption KAT"));
@@ -406,9 +398,8 @@ TEST(ServiceIndicatorTest, AESKWP) {
 TEST(ServiceIndicatorTest, BasicTest) {
    // Reset and check the initial state and counter.
   int approved = 0;
-  uint64_t counter = FIPS_service_indicator_get_counter();
-  ASSERT_EQ(counter, (uint64_t)0);
-  ASSERT_EQ(sizeof(counter), (uint64_t)8);
+  int before = FIPS_service_indicator_before_call();
+  ASSERT_EQ(before, 0);
 
   // Call an approved service.
   bssl::ScopedEVP_AEAD_CTX aead_ctx;
@@ -416,13 +407,15 @@ TEST(ServiceIndicatorTest, BasicTest) {
   size_t out_len;
   ASSERT_TRUE(EVP_AEAD_CTX_init(aead_ctx.get(), EVP_aead_aes_128_gcm_randnonce(),
                                 kAESKey, sizeof(kAESKey), 0, nullptr));
-  IS_FIPS_APPROVED_CALL_SERVICE(approved, EVP_AEAD_CTX_seal(aead_ctx.get(),
+  CALL_SERVICE_AND_CHECK_APPROVED(approved, EVP_AEAD_CTX_seal(aead_ctx.get(),
          encrypt_output, &out_len, sizeof(encrypt_output), nullptr, 0, kPlaintext, sizeof(kPlaintext), nullptr, 0));
+  // Macro should return true, to ensure FIPS/Non-FIPS compatibility.
   ASSERT_TRUE(approved);
 
-  // Check state and counter after using an approved service.
-  counter = FIPS_service_indicator_get_counter();
-  ASSERT_EQ(counter,(uint64_t)0);
+  // Actual approval check should return false during non-FIPS.
+  int after = FIPS_service_indicator_after_call();
+  ASSERT_EQ(after, 0);
+  ASSERT_FALSE(FIPS_service_indicator_check_approved(before, after));
 }
 #endif // AWSLC_FIPS
 

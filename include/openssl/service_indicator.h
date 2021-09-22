@@ -11,15 +11,18 @@ extern "C" {
 #define APPROVED                             1
 #define NOT_APPROVED                         0
 
-OPENSSL_EXPORT uint64_t FIPS_service_indicator_get_counter(void);
+OPENSSL_EXPORT int FIPS_service_indicator_before_call(void);
+OPENSSL_EXPORT int FIPS_service_indicator_after_call(void);
+OPENSSL_EXPORT int FIPS_service_indicator_check_approved(int before, int after);
 
 #if defined(AWSLC_FIPS)
-#define IS_FIPS_APPROVED_CALL_SERVICE(approved, func)                       \
+#define CALL_SERVICE_AND_CHECK_APPROVED(approved, func)                     \
   do {                                                                      \
     (approved) = NOT_APPROVED;                                              \
-    uint64_t counter = FIPS_service_indicator_get_counter();                \
+    int before = FIPS_service_indicator_before_call();                      \
     func;                                                                   \
-    if (FIPS_service_indicator_get_counter() != counter) {                  \
+    int after = FIPS_service_indicator_after_call();                        \
+    if (FIPS_service_indicator_check_approved(before, after)) {             \
         (approved) = APPROVED;                                              \
     }                                                                       \
  }                                                                          \
@@ -28,7 +31,7 @@ OPENSSL_EXPORT uint64_t FIPS_service_indicator_get_counter(void);
 #else
 // Assume true when FIPS is not on, for easier consumer compatibility that have
 // both FIPS and non-FIPS libraries.
-#define IS_FIPS_APPROVED_CALL_SERVICE(approved, func)                       \
+#define CALL_SERVICE_AND_CHECK_APPROVED(approved, func)                     \
   do {                                                                      \
     (approved) = APPROVED;                                                  \
     func;                                                                   \
