@@ -38,7 +38,7 @@ static const uint8_t kPlaintext[64] = {
 static const uint8_t kAESIV[16] = {0};
 
 static bool DoCipher(EVP_CIPHER_CTX *ctx, std::vector<uint8_t> *out,
-                     bssl::Span<const uint8_t> in, const uint32_t expected_service_id) {
+                     bssl::Span<const uint8_t> in, bool expect_approved) {
   int approved = 0;
   size_t max_out = in.size();
   if ((EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_NO_PADDING) == 0 &&
@@ -51,11 +51,15 @@ static bool DoCipher(EVP_CIPHER_CTX *ctx, std::vector<uint8_t> *out,
   size_t total = 0;
   int len;
   while (!in.empty()) {
+    // Check if EVP_Cipher service is approved.
     IS_FIPS_APPROVED_CALL_SERVICE(approved, EVP_CipherUpdate(ctx,
                        out->data() + total, &len, in.data(), in.size()));
-    EXPECT_TRUE(approved);
-    uint32_t serviceID = awslc_fips_service_indicator_get_serviceID();
-    EXPECT_EQ(serviceID, expected_service_id);
+    if(expect_approved) {
+      EXPECT_TRUE(approved);
+    }
+    else {
+      EXPECT_FALSE(approved);
+    }
 
     EXPECT_GE(len, 0);
     total += static_cast<size_t>(len);
@@ -75,7 +79,7 @@ static void TestOperation(const EVP_CIPHER *cipher, bool encrypt,
                           const std::vector<uint8_t> &iv,
                           const std::vector<uint8_t> &plaintext,
                           const std::vector<uint8_t> &ciphertext,
-                          const uint32_t expected_service_id) {
+                          bool expect_approved) {
   const std::vector<uint8_t> *in, *out;
   if (encrypt) {
     in = &plaintext;
@@ -104,7 +108,7 @@ static void TestOperation(const EVP_CIPHER *cipher, bool encrypt,
 
   ASSERT_TRUE(EVP_CIPHER_CTX_set_padding(ctx, 0));
   std::vector<uint8_t> result;
-  ASSERT_TRUE(DoCipher(ctx, &result, *in, expected_service_id));
+  ASSERT_TRUE(DoCipher(ctx, &result, *in, expect_approved));
   EXPECT_EQ(Bytes(*out), Bytes(result));
 }
 
@@ -185,28 +189,28 @@ struct EVP_TestVector {
   const uint8_t *expected_ciphertext;
   int cipher_text_length;
   bool has_iv;
-  uint32_t expected_service_id;
+  bool expect_approved;
 } nTestVectors[] = {
   {
       EVP_aes_128_ecb(),
       kAESECBCiphertext,
       64,
       false,
-      FIPS_APPROVED_EVP_AES_128_ECB
+      true
   },
   {
       EVP_aes_128_cbc(),
       kAESCBCCiphertext,
       64,
       true,
-      FIPS_APPROVED_EVP_AES_128_CBC
+      true
   },
   {
       EVP_aes_128_ctr(),
       kAESCTRCiphertext,
       64,
       true,
-      FIPS_APPROVED_EVP_AES_128_CTR
+      true
   }
 };
 
@@ -225,8 +229,8 @@ TEST_P(EVP_ServiceIndicatorTest, EVP_Ciphers) {
   if(t.has_iv) {
     iv.insert(iv.begin(), std::begin(kAESIV), std::end(kAESIV));
   }
-  TestOperation(cipher,true /* encrypt */, key, iv, plaintext, ciphertext, t.expected_service_id);
-  TestOperation(cipher,false /* decrypt */, key, iv, plaintext, ciphertext ,t.expected_service_id);
+  TestOperation(cipher,true /* encrypt */, key, iv, plaintext, ciphertext, t.expect_approved);
+  TestOperation(cipher,false /* decrypt */, key, iv, plaintext, ciphertext, t.expect_approved);
 }
 
 

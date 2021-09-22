@@ -258,7 +258,7 @@ static int aes_ecb_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
 
   if (len < bl) {
     // service indicator check.
-    AES_verify_service_indicator(dat->ks.ks.rounds, ECB);
+    AES_verify_service_indicator(dat->ks.ks.rounds);
     return 1;
   }
 
@@ -819,13 +819,13 @@ static int aes_hw_ecb_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out,
   EVP_AES_KEY *dat = (EVP_AES_KEY *)ctx->cipher_data;
   if (len < bl) {
     // service indicator check.
-    AES_verify_service_indicator(dat->ks.ks.rounds, ECB);
+    AES_verify_service_indicator(dat->ks.ks.rounds);
     return 1;
   }
 
   aes_hw_ecb_encrypt(in, out, len, ctx->cipher_data, ctx->encrypt);
   // service indicator check.
-  AES_verify_service_indicator(dat->ks.ks.rounds, ECB);
+  AES_verify_service_indicator(dat->ks.ks.rounds);
   return 1;
 }
 
