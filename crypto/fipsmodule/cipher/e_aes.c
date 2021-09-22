@@ -247,7 +247,7 @@ static int aes_cbc_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
   }
 
   // service indicator check.
-  AES_verify_service_indicator(dat->ks.ks.rounds, CBC);
+  AES_verify_service_indicator(dat->ks.ks.rounds);
   return 1;
 }
 
@@ -266,7 +266,7 @@ static int aes_ecb_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
   }
 
   // service indicator check.
-  AES_verify_service_indicator(dat->ks.ks.rounds, ECB);
+  AES_verify_service_indicator(dat->ks.ks.rounds);
   return 1;
 }
 
@@ -283,7 +283,7 @@ static int aes_ctr_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
   }
 
   // service indicator check.
-  AES_verify_service_indicator(dat->ks.ks.rounds, CTR);
+  AES_verify_service_indicator(dat->ks.ks.rounds);
   return 1;
 }
 
@@ -587,7 +587,6 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
         }
       }
     }
-    AES_GCM_verify_service_indicator(gctx->iv_gen,gctx->ks.ks.rounds, GCM);
     return len;
   } else {
     if (!ctx->encrypt) {
@@ -602,7 +601,6 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
     gctx->taglen = 16;
     // Don't reuse the IV
     gctx->iv_set = 0;
-    AES_GCM_verify_service_indicator(gctx->iv_gen,gctx->ks.ks.rounds, GMAC);
     return 0;
   }
 }
@@ -1200,12 +1198,7 @@ static int aead_aes_gcm_seal_scatter_randnonce(
   memcpy(out_tag + *out_tag_len, nonce, sizeof(nonce));
   *out_tag_len += sizeof(nonce);
   // service indicator check.
-  if(in != NULL) {
-    AEAD_verify_service_indicator(EVP_AEAD_key_length(ctx->aead), GCM);
-  }
-  else{
-    AEAD_verify_service_indicator(EVP_AEAD_key_length(ctx->aead), GMAC);
-  }
+  AEAD_verify_service_indicator(EVP_AEAD_key_length(ctx->aead));
   return 1;
 }
 
@@ -1229,12 +1222,7 @@ static int aead_aes_gcm_open_gather_randnonce(
   const struct aead_aes_gcm_ctx *gcm_ctx =
       (const struct aead_aes_gcm_ctx *)&ctx->state;
   // service indicator check.
-  if(in != NULL) {
-    AEAD_verify_service_indicator(EVP_AEAD_key_length(ctx->aead), GCM);
-  }
-  else{
-    AEAD_verify_service_indicator(EVP_AEAD_key_length(ctx->aead), GMAC);
-  }
+  AEAD_verify_service_indicator(EVP_AEAD_key_length(ctx->aead));
   return aead_aes_gcm_open_gather_impl(
       gcm_ctx, out, nonce, AES_GCM_NONCE_LENGTH, in, in_len, in_tag,
       in_tag_len - AES_GCM_NONCE_LENGTH, ad, ad_len,

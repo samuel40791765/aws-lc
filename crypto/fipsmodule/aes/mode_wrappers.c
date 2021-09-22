@@ -73,7 +73,7 @@ void AES_ctr128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
     CRYPTO_ctr128_encrypt_ctr32(in, out, len, key, ivec, ecount_buf, num,
                                 aes_nohw_ctr32_encrypt_blocks);
   }
-  AES_verify_service_indicator(key->rounds, CTR);
+  AES_verify_service_indicator(key->rounds);
 }
 
 void AES_ecb_encrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key,
@@ -86,7 +86,7 @@ void AES_ecb_encrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key,
   } else {
     AES_decrypt(in, out, key);
   }
-  AES_verify_service_indicator(key->rounds, ECB);
+  AES_verify_service_indicator(key->rounds);
 }
 
 void AES_cbc_encrypt(const uint8_t *in, uint8_t *out, size_t len,
@@ -94,14 +94,14 @@ void AES_cbc_encrypt(const uint8_t *in, uint8_t *out, size_t len,
   if (hwaes_capable()) {
     aes_hw_cbc_encrypt(in, out, len, key, ivec, enc);
     // service indicator check.
-    AES_verify_service_indicator(key->rounds, CBC);
+    AES_verify_service_indicator(key->rounds);
     return;
   }
 
   if (!vpaes_capable()) {
     aes_nohw_cbc_encrypt(in, out, len, key, ivec, enc);
     // service indicator check.
-    AES_verify_service_indicator(key->rounds, CBC);
+    AES_verify_service_indicator(key->rounds);
     return;
   }
 
@@ -111,7 +111,7 @@ void AES_cbc_encrypt(const uint8_t *in, uint8_t *out, size_t len,
     CRYPTO_cbc128_decrypt(in, out, len, key, ivec, AES_decrypt);
   }
   // service indicator check.
-  AES_verify_service_indicator(key->rounds, CBC);
+  AES_verify_service_indicator(key->rounds);
 }
 
 void AES_ofb128_encrypt(const uint8_t *in, uint8_t *out, size_t length,
