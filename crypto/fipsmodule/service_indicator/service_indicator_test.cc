@@ -1,14 +1,16 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <openssl/crypto.h>
-#include <openssl/service_indicator.h>
+#include <limits.h>
+
 
 #include <gtest/gtest.h>
 
 #include <openssl/aead.h>
 #include <openssl/aes.h>
 #include <openssl/bn.h>
+#include <openssl/cipher.h>
+#include <openssl/crypto.h>
 #include <openssl/des.h>
 #include <openssl/dh.h>
 #include <openssl/digest.h>
@@ -17,6 +19,7 @@
 #include <openssl/ec_key.h>
 #include <openssl/nid.h>
 #include <openssl/rsa.h>
+#include <openssl/service_indicator.h>
 #include <openssl/sha.h>
 
 #include "../../test/abi_test.h"
@@ -33,6 +36,77 @@ static const uint8_t kPlaintext[64] = {
 
 #if defined(AWSLC_FIPS)
 static const uint8_t kAESIV[16] = {0};
+
+static bool DoCipher(EVP_CIPHER_CTX *ctx, std::vector<uint8_t> *out,
+                     bssl::Span<const uint8_t> in, const uint32_t expected_service_id) {
+  int approved = 0;
+  size_t max_out = in.size();
+  if ((EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_NO_PADDING) == 0 &&
+      EVP_CIPHER_CTX_encrypting(ctx)) {
+    unsigned block_size = EVP_CIPHER_CTX_block_size(ctx);
+    max_out += block_size - (max_out % block_size);
+  }
+  out->resize(max_out);
+
+  size_t total = 0;
+  int len;
+  while (!in.empty()) {
+    IS_FIPS_APPROVED_CALL_SERVICE(approved, EVP_CipherUpdate(ctx,
+                       out->data() + total, &len, in.data(), in.size()));
+    EXPECT_TRUE(approved);
+    uint32_t serviceID = awslc_fips_service_indicator_get_serviceID();
+    EXPECT_EQ(serviceID, expected_service_id);
+
+    EXPECT_GE(len, 0);
+    total += static_cast<size_t>(len);
+    in = in.subspan(in.size());
+  }
+  if (!EVP_CipherFinal_ex(ctx, out->data() + total, &len)) {
+    return false;
+  }
+  EXPECT_GE(len, 0);
+  total += static_cast<size_t>(len);
+  out->resize(total);
+  return true;
+}
+
+static void TestOperation(const EVP_CIPHER *cipher, bool encrypt,
+                          const std::vector<uint8_t> &key,
+                          const std::vector<uint8_t> &iv,
+                          const std::vector<uint8_t> &plaintext,
+                          const std::vector<uint8_t> &ciphertext,
+                          const uint32_t expected_service_id) {
+  const std::vector<uint8_t> *in, *out;
+  if (encrypt) {
+    in = &plaintext;
+    out = &ciphertext;
+  } else {
+    in = &ciphertext;
+    out = &plaintext;
+  }
+
+  bssl::ScopedEVP_CIPHER_CTX ctx1;
+  ASSERT_TRUE(EVP_CipherInit_ex(ctx1.get(), cipher, nullptr, nullptr, nullptr,
+                                encrypt ? 1 : 0));
+  if (!iv.empty()) {
+    ASSERT_EQ(iv.size(), EVP_CIPHER_CTX_iv_length(ctx1.get()));
+  }
+
+  bssl::ScopedEVP_CIPHER_CTX ctx2;
+  ASSERT_TRUE(EVP_CIPHER_CTX_copy(ctx2.get(), ctx1.get()));
+  EVP_CIPHER_CTX *ctx = ctx2.get();
+
+  // The ciphers are run with no padding. For each of the ciphers we test, the
+  // output size matches the input size.
+  ASSERT_EQ(in->size(), out->size());
+  ASSERT_TRUE(EVP_CIPHER_CTX_set_key_length(ctx, key.size()));
+  ASSERT_TRUE(EVP_CipherInit_ex(ctx, nullptr, nullptr, key.data(), iv.data(), -1));
+
+  ASSERT_TRUE(EVP_CIPHER_CTX_set_padding(ctx, 0));
+  std::vector<uint8_t> result;
+  ASSERT_TRUE(DoCipher(ctx, &result, *in, expected_service_id));
+  EXPECT_EQ(Bytes(*out), Bytes(result));
+}
 
 static void hex_dump(const uint8_t *in, size_t len) {
   for (size_t i = 0; i < len; i++) {
@@ -105,6 +179,56 @@ static const uint8_t kAESKWPCiphertext[72] ={
     0x4b, 0xbf, 0xf8, 0x08, 0x1e, 0x33, 0x58, 0x37, 0xd9, 0xfc, 0xc7,
     0xa5, 0x66, 0xe5, 0x62, 0x2a, 0x01
 };
+
+struct EVP_TestVector {
+  const EVP_CIPHER *cipher;
+  const uint8_t *expected_ciphertext;
+  int cipher_text_length;
+  bool has_iv;
+  uint32_t expected_service_id;
+} nTestVectors[] = {
+  {
+      EVP_aes_128_ecb(),
+      kAESECBCiphertext,
+      64,
+      false,
+      FIPS_APPROVED_EVP_AES_128_ECB
+  },
+  {
+      EVP_aes_128_cbc(),
+      kAESCBCCiphertext,
+      64,
+      true,
+      FIPS_APPROVED_EVP_AES_128_CBC
+  },
+  {
+      EVP_aes_128_ctr(),
+      kAESCTRCiphertext,
+      64,
+      true,
+      FIPS_APPROVED_EVP_AES_128_CTR
+  }
+};
+
+class EVP_ServiceIndicatorTest : public testing::TestWithParam<EVP_TestVector> {};
+
+INSTANTIATE_TEST_SUITE_P(All, EVP_ServiceIndicatorTest, testing::ValuesIn(nTestVectors));
+
+TEST_P(EVP_ServiceIndicatorTest, EVP_Ciphers) {
+  const EVP_TestVector &t = GetParam();
+
+  const EVP_CIPHER *cipher = t.cipher;
+  std::vector<uint8_t> key, iv, plaintext;
+  key.insert(key.begin(), std::begin(kAESKey), std::end(kAESKey));
+  plaintext.insert(plaintext.begin(), std::begin(kPlaintext), std::end(kPlaintext));
+  std::vector<uint8_t> ciphertext(t.expected_ciphertext, t.expected_ciphertext + t.cipher_text_length);
+  if(t.has_iv) {
+    iv.insert(iv.begin(), std::begin(kAESIV), std::end(kAESIV));
+  }
+  TestOperation(cipher,true /* encrypt */, key, iv, plaintext, ciphertext, t.expected_service_id);
+  TestOperation(cipher,false /* decrypt */, key, iv, plaintext, ciphertext ,t.expected_service_id);
+}
+
 
 TEST(ServiceIndicatorTest, BasicTest) {
   int approved = 0;
