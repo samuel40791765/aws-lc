@@ -35,7 +35,7 @@ static const uint8_t kPlaintext[64] = {
     'P','l','a','i','n','t','e','x','t','!'};
 
 #if defined(AWSLC_FIPS)
-static const uint8_t kAESIV[16] = {0};
+static const uint8_t kAESIV[AES_BLOCK_SIZE] = {0};
 
 static bool DoCipher(EVP_CIPHER_CTX *ctx, std::vector<uint8_t> *out,
                      bssl::Span<const uint8_t> in) {
@@ -228,31 +228,65 @@ TEST(ServiceIndicatorTest, BasicTest) {
 
   // Call an approved service.
   bssl::ScopedEVP_AEAD_CTX aead_ctx;
+  uint8_t nonce[EVP_AEAD_MAX_NONCE_LENGTH] = {0};
   uint8_t output[256];
   size_t out_len;
   ASSERT_TRUE(EVP_AEAD_CTX_init(aead_ctx.get(), EVP_aead_aes_128_gcm_randnonce(),
                                 kAESKey, sizeof(kAESKey), 0, nullptr));
   CALL_SERVICE_AND_CHECK_APPROVED(approved, EVP_AEAD_CTX_seal(aead_ctx.get(),
           output, &out_len, sizeof(output), nullptr, 0, kPlaintext, sizeof(kPlaintext), nullptr, 0));
-  ASSERT_TRUE(approved);
-}
+  ASSERT_EQ(approved, AWSLC_APPROVED);
 
-TEST(ServiceIndicatorTest, NotApprovedTest) {
-  int approved = AWSLC_NOT_APPROVED;
+  // Call an approved service in a macro.
+  CALL_SERVICE_AND_CHECK_APPROVED(approved, ASSERT_EQ(EVP_AEAD_CTX_seal(aead_ctx.get(),
+          output, &out_len, sizeof(output), nullptr, 0, kPlaintext, sizeof(kPlaintext), nullptr, 0), 1));
+  ASSERT_EQ(approved, AWSLC_APPROVED);
 
-  // Call a not approved service.
-  bssl::ScopedEVP_AEAD_CTX aead_ctx;
-  uint8_t nonce[EVP_AEAD_MAX_NONCE_LENGTH];
-  uint8_t output[256];
-  size_t out_len;
+  // Call an approved service and compare expected return value.
+  int return_val = 0;
+  CALL_SERVICE_AND_CHECK_APPROVED(approved, return_val = EVP_AEAD_CTX_seal(aead_ctx.get(),
+          output, &out_len, sizeof(output), nullptr, 0, kPlaintext, sizeof(kPlaintext), nullptr, 0));
+  ASSERT_EQ(return_val, 1);
+  ASSERT_EQ(approved, AWSLC_APPROVED);
 
-  OPENSSL_memset(nonce, 0, sizeof(nonce));
+  // Call an approved service wrapped in an if statement.
+  return_val = 0;
+  CALL_SERVICE_AND_CHECK_APPROVED(approved,
+    if(EVP_AEAD_CTX_seal(aead_ctx.get(), output, &out_len, sizeof(output),
+         nullptr, 0, kPlaintext, sizeof(kPlaintext), nullptr, 0) == 1)
+    {
+      return_val = 1;
+    }
+  );
+  ASSERT_EQ(return_val, 1);
+  ASSERT_EQ(approved, AWSLC_APPROVED);
+
+  // Fail an approved service on purpose.
+  return_val = 0;
+  CALL_SERVICE_AND_CHECK_APPROVED(approved, return_val = EVP_AEAD_CTX_seal(aead_ctx.get(),
+          output, &out_len, 0, nullptr, 0, kPlaintext, sizeof(kPlaintext), nullptr, 0));
+  ASSERT_EQ(return_val, 0);
+  ASSERT_EQ(approved, AWSLC_NOT_APPROVED);
+
+  // Fail an approved service on purpose while wrapped in an if statement.
+  return_val = 0;
+  CALL_SERVICE_AND_CHECK_APPROVED(approved,
+    if(EVP_AEAD_CTX_seal(aead_ctx.get(), output, &out_len, 0,
+        nullptr, 0, kPlaintext, sizeof(kPlaintext), nullptr, 0) == 1)
+    {
+      return_val = 1;
+    }
+  );
+  ASSERT_EQ(return_val, 0);
+  ASSERT_EQ(approved, AWSLC_NOT_APPROVED);
+
+  // Call a non-approved service.
   ASSERT_TRUE(EVP_AEAD_CTX_init(aead_ctx.get(), EVP_aead_aes_128_gcm(),
                                 kAESKey, sizeof(kAESKey), 0, nullptr));
   CALL_SERVICE_AND_CHECK_APPROVED(approved, EVP_AEAD_CTX_seal(aead_ctx.get(),
-              output, &out_len, sizeof(output), nonce, EVP_AEAD_nonce_length(EVP_aead_aes_128_gcm()),
-              kPlaintext, sizeof(kPlaintext), nullptr, 0));
-  ASSERT_FALSE(approved);
+          output, &out_len, sizeof(output), nonce, EVP_AEAD_nonce_length(EVP_aead_aes_128_gcm()),
+          kPlaintext, sizeof(kPlaintext), nullptr, 0));
+  ASSERT_EQ(approved, AWSLC_NOT_APPROVED);
 }
 
 TEST(ServiceIndicatorTest, AESECB) {
@@ -288,7 +322,6 @@ TEST(ServiceIndicatorTest, AESCBC) {
   AES_KEY aes_key;
   uint8_t aes_iv[16];
   uint8_t output[256];
-
   // AES-CBC Encryption KAT
   memcpy(aes_iv, kAESIV, sizeof(kAESIV));
   ASSERT_EQ(AES_set_encrypt_key(kAESKey, 8 * sizeof(kAESKey), &aes_key),0);
@@ -346,17 +379,15 @@ TEST(ServiceIndicatorTest, AESGCM) {
   ASSERT_TRUE(EVP_AEAD_CTX_init(aead_ctx.get(), EVP_aead_aes_128_gcm_randnonce(),
                                 kAESKey, sizeof(kAESKey), 0, nullptr));
 
-  // AES-GCM Encryption
   CALL_SERVICE_AND_CHECK_APPROVED(approved,EVP_AEAD_CTX_seal(aead_ctx.get(),
       encrypt_output, &out_len, sizeof(encrypt_output), nullptr, 0, kPlaintext, sizeof(kPlaintext), nullptr, 0));
-  ASSERT_TRUE(approved);
-  
-  // AES-GCM Decryption
+  ASSERT_EQ(approved, AWSLC_APPROVED);
+
   CALL_SERVICE_AND_CHECK_APPROVED(approved,EVP_AEAD_CTX_open(aead_ctx.get(),
       decrypt_output, &out2_len, sizeof(decrypt_output), nullptr, 0, encrypt_output, out_len, nullptr, 0));
   ASSERT_TRUE(check_test(kPlaintext, decrypt_output, sizeof(kPlaintext),
                   "AES-GCM Decryption for Internal IVs"));
-  ASSERT_TRUE(approved);
+  ASSERT_EQ(approved, AWSLC_APPROVED);
 }
 
 TEST(ServiceIndicatorTest, AESKW) {
@@ -416,19 +447,29 @@ TEST(ServiceIndicatorTest, BasicTest) {
 
   // Call an approved service.
   bssl::ScopedEVP_AEAD_CTX aead_ctx;
-  uint8_t encrypt_output[256];
+  uint8_t nonce[EVP_AEAD_MAX_NONCE_LENGTH] = {0};
+  uint8_t output[256];
   size_t out_len;
   ASSERT_TRUE(EVP_AEAD_CTX_init(aead_ctx.get(), EVP_aead_aes_128_gcm_randnonce(),
                                 kAESKey, sizeof(kAESKey), 0, nullptr));
   CALL_SERVICE_AND_CHECK_APPROVED(approved, EVP_AEAD_CTX_seal(aead_ctx.get(),
-         encrypt_output, &out_len, sizeof(encrypt_output), nullptr, 0, kPlaintext, sizeof(kPlaintext), nullptr, 0));
+          output, &out_len, sizeof(output), nullptr, 0, kPlaintext, sizeof(kPlaintext), nullptr, 0));
   // Macro should return true, to ensure FIPS/Non-FIPS compatibility.
-  ASSERT_TRUE(approved);
+  ASSERT_EQ(approved, AWSLC_APPROVED);
 
   // Actual approval check should return false during non-FIPS.
   uint64_t after = FIPS_service_indicator_after_call();
   ASSERT_EQ(after, (uint64_t)0);
   ASSERT_FALSE(FIPS_service_indicator_check_approved(before, after));
+
+
+  // Call a non-approved service.
+  ASSERT_TRUE(EVP_AEAD_CTX_init(aead_ctx.get(), EVP_aead_aes_128_gcm(),
+                                kAESKey, sizeof(kAESKey), 0, nullptr));
+  CALL_SERVICE_AND_CHECK_APPROVED(approved, EVP_AEAD_CTX_seal(aead_ctx.get(),
+          output, &out_len, sizeof(output), nonce, EVP_AEAD_nonce_length(EVP_aead_aes_128_gcm()),
+          kPlaintext, sizeof(kPlaintext), nullptr, 0));
+  ASSERT_EQ(approved, AWSLC_APPROVED);
 }
 #endif // AWSLC_FIPS
 
