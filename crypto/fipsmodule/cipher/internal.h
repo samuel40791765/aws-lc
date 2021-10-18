@@ -75,6 +75,9 @@ extern "C" {
 
 // EVP_AEAD represents a specific AEAD algorithm.
 struct evp_aead_st {
+  // type contains a NID identifing the cipher.
+  int nid;
+
   uint8_t key_len;
   uint8_t nonce_len;
   uint8_t overhead;

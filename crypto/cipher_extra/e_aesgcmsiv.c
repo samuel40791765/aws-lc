@@ -20,6 +20,7 @@
 #include <openssl/cpu.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/nid.h>
 
 #include "../fipsmodule/cipher/internal.h"
 
@@ -525,6 +526,7 @@ static int aead_aes_gcm_siv_asm_open(const EVP_AEAD_CTX *ctx, uint8_t *out,
 }
 
 static const EVP_AEAD aead_aes_128_gcm_siv_asm = {
+    NID_aead_aes_128_gcm_siv_asm,        // nid
     16,                              // key length
     EVP_AEAD_AES_GCM_SIV_NONCE_LEN,  // nonce length
     EVP_AEAD_AES_GCM_SIV_TAG_LEN,    // overhead
@@ -542,6 +544,7 @@ static const EVP_AEAD aead_aes_128_gcm_siv_asm = {
 };
 
 static const EVP_AEAD aead_aes_256_gcm_siv_asm = {
+    NID_aead_aes_256_gcm_siv_asm,        // nid
     32,                              // key length
     EVP_AEAD_AES_GCM_SIV_NONCE_LEN,  // nonce length
     EVP_AEAD_AES_GCM_SIV_TAG_LEN,    // overhead
@@ -822,6 +825,7 @@ static int aead_aes_gcm_siv_open_gather(const EVP_AEAD_CTX *ctx, uint8_t *out,
 }
 
 static const EVP_AEAD aead_aes_128_gcm_siv = {
+    NID_aead_aes_128_gcm_siv,        // nid
     16,                              // key length
     EVP_AEAD_AES_GCM_SIV_NONCE_LEN,  // nonce length
     EVP_AEAD_AES_GCM_SIV_TAG_LEN,    // overhead
@@ -839,6 +843,7 @@ static const EVP_AEAD aead_aes_128_gcm_siv = {
 };
 
 static const EVP_AEAD aead_aes_256_gcm_siv = {
+    NID_aead_aes_256_gcm_siv,        // nid
     32,                              // key length
     EVP_AEAD_AES_GCM_SIV_NONCE_LEN,  // nonce length
     EVP_AEAD_AES_GCM_SIV_TAG_LEN,    // overhead

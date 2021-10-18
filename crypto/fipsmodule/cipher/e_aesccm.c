@@ -405,6 +405,7 @@ static int aead_aes_ccm_bluetooth_init(EVP_AEAD_CTX *ctx, const uint8_t *key,
 DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_128_ccm_bluetooth) {
   memset(out, 0, sizeof(EVP_AEAD));
 
+  out->nid = NID_aead_aes_128_ccm_bluetooth;
   out->key_len = 16;
   out->nonce_len = 13;
   out->overhead = 4;
@@ -425,6 +426,7 @@ static int aead_aes_ccm_bluetooth_8_init(EVP_AEAD_CTX *ctx, const uint8_t *key,
 DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_128_ccm_bluetooth_8) {
   memset(out, 0, sizeof(EVP_AEAD));
 
+  out->nid = NID_aead_aes_128_ccm_bluetooth_8;
   out->key_len = 16;
   out->nonce_len = 13;
   out->overhead = 8;

@@ -1103,6 +1103,7 @@ static int aead_aes_gcm_open_gather(const EVP_AEAD_CTX *ctx, uint8_t *out,
 DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_128_gcm) {
   memset(out, 0, sizeof(EVP_AEAD));
 
+  out->nid = NID_aead_aes_128_gcm;
   out->key_len = 16;
   out->nonce_len = AES_GCM_NONCE_LENGTH;
   out->overhead = EVP_AEAD_AES_GCM_TAG_LEN;
@@ -1118,6 +1119,7 @@ DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_128_gcm) {
 DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_192_gcm) {
   memset(out, 0, sizeof(EVP_AEAD));
 
+  out->nid = NID_aead_aes_192_gcm;
   out->key_len = 24;
   out->nonce_len = AES_GCM_NONCE_LENGTH;
   out->overhead = EVP_AEAD_AES_GCM_TAG_LEN;
@@ -1133,6 +1135,7 @@ DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_192_gcm) {
 DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_256_gcm) {
   memset(out, 0, sizeof(EVP_AEAD));
 
+  out->nid = NID_aead_aes_256_gcm;
   out->key_len = 32;
   out->nonce_len = AES_GCM_NONCE_LENGTH;
   out->overhead = EVP_AEAD_AES_GCM_TAG_LEN;
@@ -1238,6 +1241,7 @@ static int aead_aes_gcm_open_gather_randnonce(
 DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_128_gcm_randnonce) {
   memset(out, 0, sizeof(EVP_AEAD));
 
+  out->nid = NID_aead_aes_128_gcm_rand_nonce;
   out->key_len = 16;
   out->nonce_len = 0;
   out->overhead = EVP_AEAD_AES_GCM_TAG_LEN + AES_GCM_NONCE_LENGTH;
@@ -1253,6 +1257,7 @@ DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_128_gcm_randnonce) {
 DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_256_gcm_randnonce) {
   memset(out, 0, sizeof(EVP_AEAD));
 
+  out->nid = NID_aead_aes_256_gcm_rand_nonce;
   out->key_len = 32;
   out->nonce_len = 0;
   out->overhead = EVP_AEAD_AES_GCM_TAG_LEN + AES_GCM_NONCE_LENGTH;
@@ -1330,6 +1335,7 @@ static int aead_aes_gcm_tls12_seal_scatter(
 DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_128_gcm_tls12) {
   memset(out, 0, sizeof(EVP_AEAD));
 
+  out->nid = NID_aead_aes_128_gcm_tls12;
   out->key_len = 16;
   out->nonce_len = AES_GCM_NONCE_LENGTH;
   out->overhead = EVP_AEAD_AES_GCM_TAG_LEN;
@@ -1345,6 +1351,7 @@ DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_128_gcm_tls12) {
 DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_256_gcm_tls12) {
   memset(out, 0, sizeof(EVP_AEAD));
 
+  out->nid = NID_aead_aes_256_gcm_tls12;
   out->key_len = 32;
   out->nonce_len = AES_GCM_NONCE_LENGTH;
   out->overhead = EVP_AEAD_AES_GCM_TAG_LEN;
@@ -1436,6 +1443,7 @@ static int aead_aes_gcm_tls13_seal_scatter(
 DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_128_gcm_tls13) {
   memset(out, 0, sizeof(EVP_AEAD));
 
+  out->nid = NID_aead_aes_128_gcm_tls13;
   out->key_len = 16;
   out->nonce_len = AES_GCM_NONCE_LENGTH;
   out->overhead = EVP_AEAD_AES_GCM_TAG_LEN;
@@ -1451,6 +1459,7 @@ DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_128_gcm_tls13) {
 DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_aes_256_gcm_tls13) {
   memset(out, 0, sizeof(EVP_AEAD));
 
+  out->nid = NID_aead_aes_256_gcm_tls13;
   out->key_len = 32;
   out->nonce_len = AES_GCM_NONCE_LENGTH;
   out->overhead = EVP_AEAD_AES_GCM_TAG_LEN;

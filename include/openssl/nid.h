@@ -4251,6 +4251,57 @@ extern "C" {
 #define NID_sha512_256 962
 #define OBJ_sha512_256 2L, 16L, 840L, 1L, 101L, 3L, 4L, 2L, 6L
 
+#define NID_aead_chacha20_poly1305 963
+
+#define NID_aead_xchacha20_poly1305 964
+
+#define NID_aead_des_ede3_cbc_sha1_tls 965
+
+#define NID_aead_des_ede3_cbc_sha1_tls_implicit_iv 966
+
+#define NID_aead_aes_128_gcm 967
+
+#define NID_aead_aes_128_gcm_tls12 968
+
+#define NID_aead_aes_128_gcm_tls13 969
+
+#define NID_aead_null_sha1_tls 970
+
+#define NID_aead_aes_128_gcm_rand_nonce 971
+
+#define NID_aead_aes_128_gcm_siv 972
+
+#define NID_aead_aes_128_gcm_siv_asm 973
+
+#define NID_aead_aes_128_ctr_hmac_sha256 974
+
+#define NID_aead_aes_128_cbc_sha1_tls 975
+
+#define NID_aead_aes_128_cbc_sha1_tls_implicit_iv 976
+
+#define NID_aead_aes_128_ccm_bluetooth 977
+
+#define NID_aead_aes_128_ccm_bluetooth_8 978
+
+#define NID_aead_aes_192_gcm 979
+
+#define NID_aead_aes_256_gcm 980
+
+#define NID_aead_aes_256_gcm_tls12 981
+
+#define NID_aead_aes_256_gcm_tls13 982
+
+#define NID_aead_aes_256_gcm_rand_nonce 983
+
+#define NID_aead_aes_256_gcm_siv 984
+
+#define NID_aead_aes_256_gcm_siv_asm 985
+
+#define NID_aead_aes_256_ctr_hmac_sha256 986
+
+#define NID_aead_aes_256_cbc_sha1_tls 987
+
+#define NID_aead_aes_256_cbc_sha1_tls_implicit_iv 988
 
 #if defined(__cplusplus)
 } /* extern C */

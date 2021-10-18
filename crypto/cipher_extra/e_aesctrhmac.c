@@ -16,6 +16,7 @@
 #include <openssl/cipher.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/nid.h>
 #include <openssl/sha.h>
 
 #include "../fipsmodule/cipher/internal.h"
@@ -241,6 +242,7 @@ static int aead_aes_ctr_hmac_sha256_open_gather(
 }
 
 static const EVP_AEAD aead_aes_128_ctr_hmac_sha256 = {
+    NID_aead_aes_128_ctr_hmac_sha256,       // nid
     16 /* AES key */ + 32 /* HMAC key */,
     12,                                    // nonce length
     EVP_AEAD_AES_CTR_HMAC_SHA256_TAG_LEN,  // overhead
@@ -258,6 +260,7 @@ static const EVP_AEAD aead_aes_128_ctr_hmac_sha256 = {
 };
 
 static const EVP_AEAD aead_aes_256_ctr_hmac_sha256 = {
+    NID_aead_aes_256_ctr_hmac_sha256,     // nid
     32 /* AES key */ + 32 /* HMAC key */,
     12,                                    // nonce length
     EVP_AEAD_AES_CTR_HMAC_SHA256_TAG_LEN,  // overhead

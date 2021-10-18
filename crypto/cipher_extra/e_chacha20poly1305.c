@@ -20,6 +20,7 @@
 #include <openssl/cipher.h>
 #include <openssl/err.h>
 #include <openssl/mem.h>
+#include <openssl/nid.h>
 #include <openssl/poly1305.h>
 #include <openssl/type_check.h>
 
@@ -301,6 +302,7 @@ static int aead_xchacha20_poly1305_open_gather(
 }
 
 static const EVP_AEAD aead_chacha20_poly1305 = {
+    NID_aead_chacha20_poly1305,   // nid
     32,                // key len
     12,                // nonce len
     POLY1305_TAG_LEN,  // overhead
@@ -318,6 +320,7 @@ static const EVP_AEAD aead_chacha20_poly1305 = {
 };
 
 static const EVP_AEAD aead_xchacha20_poly1305 = {
+    NID_aead_xchacha20_poly1305,   // nid
     32,                // key len
     24,                // nonce len
     POLY1305_TAG_LEN,  // overhead
