@@ -227,6 +227,19 @@ function setup_ci() {
   create_github_ci_stack
 }
 
+function create_android_ci_stack() {
+  cdk deploy aws-lc-ci-* --require-approval never
+
+  # Need to use aws cli to change webhook build type because CFN is not ready yet.
+  aws codebuild update-webhook --project-name aws-lc-ci-linux-x86 --build-type BUILD_BATCH
+  aws codebuild update-webhook --project-name aws-lc-ci-linux-arm --build-type BUILD_BATCH
+  # TODO: re-enable 'aws-lc-ci-windows-x86' when CryptoAlg-826 is fixed.
+#  aws codebuild update-webhook --project-name aws-lc-ci-windows-x86 --build-type BUILD_BATCH
+  aws codebuild update-webhook --project-name aws-lc-ci-fuzzing --build-type BUILD_BATCH
+  # TODO: re-enable 'aws-lc-ci-bm-framework' when it's ready.
+#  aws codebuild update-webhook --project-name aws-lc-ci-bm-framework --build-type BUILD_BATCH
+}
+
 ###########################
 # Main and related helper #
 ###########################
@@ -338,6 +351,9 @@ function main() {
     ;;
   update-ci)
     create_github_ci_stack
+    ;;
+  update-android-ci)
+    create_android_ci_stack
     ;;
   destroy-ci)
     destroy_ci

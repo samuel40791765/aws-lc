@@ -8,6 +8,7 @@ from aws_cdk import core
 from cdk.bm_framework_stack import BmFrameworkStack
 from cdk.aws_lc_github_ci_stack import AwsLcGitHubCIStack
 from cdk.aws_lc_github_fuzz_ci_stack import  AwsLcGitHubFuzzCIStack
+from cdk.aws_lc_android_ci_stack import AwsLcAndroidCIStack
 from cdk.linux_docker_image_batch_build_stack import LinuxDockerImageBatchBuildStack
 from cdk.windows_docker_image_build_stack import WindowsDockerImageBuildStack
 from cdk.ecr_stack import EcrStack
@@ -47,5 +48,7 @@ AwsLcGitHubFuzzCIStack(app, "aws-lc-ci-fuzzing", LINUX_X86_ECR_REPO, LINUX_AARCH
 # TODO: re-enable 'aws-lc-ci-bm-framework' when it's ready.
 # bm_framework_build_spec_file = "./cdk/codebuild/bm_framework_omnibus.yaml"
 # BmFrameworkStack(app, "aws-lc-ci-bm-framework", LINUX_X86_ECR_REPO, bm_framework_build_spec_file, env=env)
+
+# AwsLcAndroidCIStack(app, "aws-lc-ci-linux-x86", LINUX_X86_ECR_REPO, x86_build_spec_file, env=env)
 
 app.synth()
