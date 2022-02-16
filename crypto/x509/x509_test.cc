@@ -1074,6 +1074,63 @@ TXHOSQQD8Dl4BK0wOet+TP6LBEjHlRFjAqK4bu9xpxV2
 -----END CERTIFICATE-----
 )";
 
+static const char ca_cert_ec_named[] = R"(
+-----BEGIN CERTIFICATE-----
+MIICJDCCAQygAwIBAgIBAjANBgkqhkiG9w0BAQsFADASMRAwDgYDVQQDDAdSb290
+IENBMCAXDTIwMDkxNTEzMDY1MFoYDzIxMjAwOTE2MTMwNjUwWjANMQswCQYDVQQD
+DAJDQTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABPt+MXCi9+wztEvmdG2EVSk7
+bAiJMXJXW/u0NbcGCrrbhO1NJSHHV3Lks888sqeSPh/bif/ASJ0HX+VarMUoFIKj
+UzBRMB0GA1UdDgQWBBRjigU5REz8Lwf1iD6mALVhsHIanjAfBgNVHSMEGDAWgBSO
+9SWvHptrhD18gJrJU5xNcvejUjAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEB
+CwUAA4IBAQCQs9wpblefb2C9a7usGL1DJjWJQIFHtUf+6p/KPgEV7LF138ECjL5s
+0AWRd8Q8SbsBH49j2r3LLLMkvFglyRaN+FF+TCC/UQtclTb4+HgLsUT2xSU8U2cY
+SOnzNB5AX/qAAsdOGqOjivPtGXcXFexDKPsw3n+3rJgymBP6hbLagb47IabNhot5
+bMM6S+bmfpMwfsm885zr5vG2Gg9FjjH94Vx4I7eRLkjCS88gkIR1J35ecHFteOdo
+idOaCHQddYiKukBzgdjtTxSDXKffkaybylrwOZ8VBlQd3zC7s02d+riHCnroLnnE
+cwYLlJ5z6jN7zoPZ55yX/EmA0RVny2le
+-----END CERTIFICATE-----
+)";
+
+static const char ee_cert_ec_explicit[] = R"(
+-----BEGIN CERTIFICATE-----
+MIIChzCCAi6gAwIBAgIBAjAKBggqhkjOPQQDAjANMQswCQYDVQQDDAJDQTAgFw0y
+MDA5MTUxMzE0MzlaGA8yMTIwMDkxNjEzMTQzOVowGTEXMBUGA1UEAwwOc2VydmVy
+LmV4YW1wbGUwggFLMIIBAwYHKoZIzj0CATCB9wIBATAsBgcqhkjOPQEBAiEA////
+/wAAAAEAAAAAAAAAAAAAAAD///////////////8wWwQg/////wAAAAEAAAAAAAAA
+AAAAAAD///////////////wEIFrGNdiqOpPns+u9VXaYhrxlHQawzFOw9jvOPD4n
+0mBLAxUAxJ02CIbnBJNqZnjhE50mt4GffpAEQQRrF9Hy4SxCR/i85uVjpEDydwN9
+gS3rM6D0oTlF2JjClk/jQuL+Gn+bjufrSnwPnhYrzjNXazFezsu2QGg3v1H1AiEA
+/////wAAAAD//////////7zm+q2nF56E87nKwvxjJVECAQEDQgAE+7TDP7C9VqQP
+TnqoJc/Fvf/N45BX+lBfmfiGBeRKtSsvrERUlymzQ4/nxVtymozAgFxQ0my998HH
+TSVCj7Sq56N9MHswHQYDVR0OBBYEFKKwEfKYhNv6fbQf0Xd0te7J3GZdMB8GA1Ud
+IwQYMBaAFGOKBTlETPwvB/WIPqYAtWGwchqeMAkGA1UdEwQCMAAwEwYDVR0lBAww
+CgYIKwYBBQUHAwEwGQYDVR0RBBIwEIIOc2VydmVyLmV4YW1wbGUwCgYIKoZIzj0E
+AwIDRwAwRAIgb4UITAOFlATeaayWQX9r5gf61qcnzT7TjXCekf7ww9oCIBDltg/u
+ZvS9gqviMFuPjTuk/FhsCTAUzTT7WmgcWeH7
+-----END CERTIFICATE-----
+)";
+
+static const char root_cert[] = R"(
+-----BEGIN CERTIFICATE-----
+MIIC8TCCAdmgAwIBAgIBATANBgkqhkiG9w0BAQsFADASMRAwDgYDVQQDDAdSb290
+IENBMCAXDTE2MDExNTA4MTk0OVoYDzIxMTYwMTE2MDgxOTQ5WjASMRAwDgYDVQQD
+DAdSb290IENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4eYA9Qa8
+oEY4eQ8/HnEZE20C3yubdmv8rLAh7daRCEI7pWM17FJboKJKxdYAlAOXWj25ZyjS
+feMhXKTtxjyNjoTRnVTDPdl0opZ2Z3H5xhpQd7P9eO5b4OOMiSPCmiLsPtQ3ngfN
+wCtVERc6NEIcaQ06GLDtFZRexv2eh8Yc55QaksBfBcFzQ+UD3gmRySTO2I6Lfi7g
+MUjRhipqVSZ66As2Tpex4KTJ2lxpSwOACFaDox+yKrjBTP7FsU3UwAGq7b7OJb3u
+aa32B81uK6GJVPVo65gJ7clgZsszYkoDsGjWDqtfwTVVfv1G7rrr3Laio+2Ff3ff
+tWgiQ35mJCOvxQIDAQABo1AwTjAdBgNVHQ4EFgQUjvUlrx6ba4Q9fICayVOcTXL3
+o1IwHwYDVR0jBBgwFoAUjvUlrx6ba4Q9fICayVOcTXL3o1IwDAYDVR0TBAUwAwEB
+/zANBgkqhkiG9w0BAQsFAAOCAQEAyRRJx27WYOogPXZpPfAMt8ptapr/ugLWGLlw
+bzKySoyLpoV2/YNAvTAGB90iFq6x/ujjrK41/ES0p3v38/Qfuxo24gcZgc/oYLV2
+UqR+uGCx68p2OWLYctBsARtYWOEgPhHFb9aVxcOQKyZHtivDX0wLGX+nqZoHX9IY
+mc0sbpRBRMzxRsChbzD5re9kZ5NrgkjA6DJ7jYh2GitOM6oIU3Dd9+pk3bCEkFUg
+Ry9qN/k+AyeqH1Qcb5LU+MTmlw8bmyzmMOBZgdegtO4HshcBMO054KSB3WSfBPDO
+bEhZ0vm/lw63TGi88yIMtlkmcU2g0RKpeQI96G6QeqHyKF3p8A==
+-----END CERTIFICATE-----
+)";
+
 // CertFromPEM parses the given, NUL-terminated pem block and returns an
 // |X509*|.
 static bssl::UniquePtr<X509> CertFromPEM(const char *pem) {
@@ -1133,7 +1190,11 @@ static bssl::UniquePtr<STACK_OF(X509_CRL)> CRLsToStack(
   return stack;
 }
 
-static const time_t kReferenceTime = 1474934400 /* Sep 27th, 2016 */;
+// static const time_t kReferenceTime = 1474934400 /* Sep 27th, 2016 */;
+
+// Feb 16, 2022, changed to help example cert in |TestExplicitEC| pass through
+// temporarily
+static const time_t kReferenceTime = 1645054028;
 
 static int Verify(
     X509 *leaf, const std::vector<X509 *> &roots,
@@ -1182,6 +1243,19 @@ static int Verify(
   }
 
   return X509_V_OK;
+}
+
+TEST(X509Test, TestExplicitEC) {
+  bssl::UniquePtr<X509> root(CertFromPEM(root_cert));
+  bssl::UniquePtr<X509> intermediate_named(CertFromPEM(ca_cert_ec_named));
+  bssl::UniquePtr<X509> leaf_explicit(CertFromPEM(ee_cert_ec_explicit));
+
+  std::function<void(X509_VERIFY_PARAM *)> configure_callback;
+
+  // Will be OK unless https://github.com/openssl/openssl/issues/12139 is
+  // addressed?
+  ASSERT_EQ(X509_V_OK, Verify(leaf_explicit.get(), {root.get()}, {intermediate_named.get()},
+                                /*crls=*/{}, /*flags=*/0, configure_callback));
 }
 
 TEST(X509Test, TestVerify) {
