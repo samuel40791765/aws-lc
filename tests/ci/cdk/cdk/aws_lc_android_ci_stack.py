@@ -76,6 +76,12 @@ class AwsLcAndroidCIStack(core.Stack):
             )
         )
 
+        cfn_build = project.node.default_child
+        cfn_build.add_override("Properties.BuildBatchConfig", {
+            "ServiceRole": role.role_arn,
+            "TimeoutInMins": 180
+        })
+
         # Create pipeline stages and stage
         source_output = codepipeline.Artifact(artifact_name="artifacts")
         source_action = codepipeline_actions.S3SourceAction(

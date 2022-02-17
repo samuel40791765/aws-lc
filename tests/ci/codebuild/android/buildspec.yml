@@ -15,6 +15,6 @@ phases:
       - ls apk-artifacts
 artifacts:
   files:
-     - './AWSLCAndroidTestRunner/apk-artifacts/**/**/*.apk'
+     - './tests/ci/android/AWSLCAndroidTestRunner/apk-artifacts/**/**/*.apk'
   discard-paths: yes
 
