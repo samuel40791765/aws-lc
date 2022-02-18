@@ -87,17 +87,17 @@ class AwsLcAndroidCIStack(core.Stack):
             "TimeoutInMins": 180
         })
 
-        # Create pipeline stages and stage
-        source_output = codepipeline.Artifact(artifact_name="artifacts")
-        source_action = codepipeline_actions.S3SourceAction(
-            action_name="awslc-android-s3-bucket-src",
-            bucket_key="apk-artifacts",
-            bucket=source_bucket,
-            output=source_output,
-            trigger=codepipeline_actions.S3Trigger.EVENTS
-        )
+        # # Create pipeline stages and stage
+        # source_output = codepipeline.Artifact(artifact_name="artifacts")
+        # source_action = codepipeline_actions.S3SourceAction(
+        #     action_name="awslc-android-s3-bucket-src",
+        #     bucket_key="AWSLCAndroidTestRunner-artifacts",
+        #     bucket=source_bucket,
+        #     output=source_output,
+        #     trigger=codepipeline_actions.S3Trigger.EVENTS
+        # )
 
-        # Provide a Stage when creating a pipeline
+        # # Provide a Stage when creating a pipeline
         # pipeline = codepipeline.Pipeline(self, "android-devicefarm-codepipeline")
         # source_stage = pipeline.add_stage(stage_name="codebuild-artifact-source", actions=[source_action])
         # build_stage = pipeline.add_stage(stage_name="android-codebuild", actions=[codebuild_action])
@@ -114,11 +114,12 @@ class AwsLcAndroidCIStack(core.Stack):
         #                 inline_policies=inline_policies)
 
         # # Create build spec.
-        # build_spec_content = YmlLoader.load("../android/aws-resources/buildspec.yml")
+        # placeholder_map = {"ECR_REPO_PLACEHOLDER": ecr_arn(ecr_repo_name)}
+        # build_spec_content = YmlLoader.load(spec_file_path, placeholder_map)
 
         # android_codebuild_project = codebuild.PipelineProject(self, "AndroidCodebuild",
         #     timeout=core.Duration.minutes(60),
-        #     environment=codebuild.BuildEnvironment(compute_type=codebuild.ComputeType.SMALL,
+        #     environment=codebuild.BuildEnvironment(compute_type=codebuild.ComputeType.LARGE,
         #                                            privileged=False,
         #                                            build_image=codebuild.LinuxBuildImage.STANDARD_4_0),
         #     build_spec=codebuild.BuildSpec.from_object(build_spec_content)
@@ -153,7 +154,8 @@ class AwsLcAndroidCIStack(core.Stack):
         #     output=source_output,
         #     owner=GITHUB_REPO_OWNER,
         #     repo=GITHUB_REPO_NAME,
-        #     oauth_token=core.SecretValue.plain_text("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"),
+        #     branch="main",
+        #     oauth_token=core.SecretValue.plain_text("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"),
         #     #oauth_token=core.SecretValue.secrets_manager("android-github-access"),
         #     variables_namespace="MyNamespace"
         # )

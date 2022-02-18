@@ -16,6 +16,6 @@ phases:
 artifacts:
   files:
      - './tests/ci/android/AWSLCAndroidTestRunner/apk-artifacts/**/**/*.apk'
-  name: AWSLCAndroidTestRunner-apk-l$CODEBUILD_BUILD_ID
+  name: AWSLCAndroidTestRunner-artifacts
   discard-paths: yes
 
