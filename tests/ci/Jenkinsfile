@@ -3,7 +3,15 @@ peline {
     stages {
         stage('Build') {
             steps {
-                cd tests/ci/android/AWSLCAndroidTestRunner 
+                cd tests/ci/android/AWSLCAndroidTestRunner
+                mkdir apk-artifacts
+                ./gradlew assembleDebug assembleAndroidTest
+                mv app/build/outputs/apk apk-artifacts/non-fips-dbg
+                ./gradlew clean assembleDebug assembleAndroidTest -PRelease
+                mv app/build/outputs/apk apk-artifacts/non-fips-rel
+                ./gradlew clean assembleDebug assembleAndroidTest -PFIPS
+                mv app/build/outputs/apk apk-artifacts/fips
+                ls apk-artifacts
             }
         }
     }
