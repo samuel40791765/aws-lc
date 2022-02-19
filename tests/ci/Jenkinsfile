@@ -1,0 +1,10 @@
+peline {
+    agent any 
+    stages {
+        stage('Build') {
+            steps {
+                cd tests/ci/android/AWSLCAndroidTestRunner 
+            }
+        }
+    }
+}
