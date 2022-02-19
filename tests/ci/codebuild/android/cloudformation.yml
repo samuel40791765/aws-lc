@@ -1,11 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Lambda for Pipeline Integrations.
 Parameters:
-  IntegrationType:
-    Type: String
-    AllowedValues:
-      - "GitHub"
-    Description: Enter GitHub
   IntegrationUser:
     NoEcho: true
     Type: String
@@ -165,7 +160,6 @@ Resources:
         Variables:
           INTEGRATION_AUTH_USER: !Ref IntegrationUser
           INTEGRATION_AUTH_PASS: !Ref IntegrationPass
-          INTEGRATION_TYPE: !Ref IntegrationType
 
       Code:
         ZipFile: |
@@ -180,7 +174,7 @@ Resources:
           codepipeline_client = boto3.client('codepipeline')
           integration_user = os.environ['INTEGRATION_AUTH_USER']
           integration_pass = os.environ['INTEGRATION_AUTH_PASS']
-          integration_type = os.environ['INTEGRATION_TYPE']
+          integration_type = "GitHub"
           user_pass = integration_user+":"+integration_pass
 
 
