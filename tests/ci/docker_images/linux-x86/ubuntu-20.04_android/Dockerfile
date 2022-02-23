@@ -11,9 +11,9 @@ ENV ANDROID_HOME /opt/android-sdk
 # ------------------------------------------------------
 # --- Android SDK
 
-RUN apt-get update && \
+RUN apt-get update -y && \
     apt-get -y --no-install-recommends upgrade && \
-    apt-get -y --no-install-recommends install openjdk-8-jdk unzip && \
+    apt-get -y --no-install-recommends install openjdk-8-jdk groff unzip && \
     mkdir /opt/android-sdk && \                                                                                                     
     mkdir /opt/android-sdk-tmp && \
     cd /opt/android-sdk-tmp && \

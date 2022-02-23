@@ -1,0 +1,18 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - chmod +x ./tests/ci/android/AWSLCAndroidTestRunner/gradlew
+      - cd tests/ci/android/AWSLCAndroidTestRunner
+      - mkdir apk-artifacts
+      - ./gradlew assembleDebug assembleAndroidTest
+      - cd ../
+      - python3 -m venv .env && source .env/bin/activate && pip install -r requirements.txt
+      - ./kickoff_devicefarm.sh --action start-job
+artifacts:
+  files:
+     - './tests/ci/android/AWSLCAndroidTestRunner/apk-artifacts/**/**/*.apk'
+  name: AWSLCAndroidTestRunner-artifacts
+  discard-paths: yes
+
