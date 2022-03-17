@@ -11,7 +11,7 @@ phases:
       - APK='apk-artifacts/non-fips-dbg/debug/awslc_androidrunner_dbg.apk'
       - TEST_APK='apk-artifacts/non-fips-dbg/androidTest/debug/awslc_androidrunner_dbg-androidTest.apk'
       - cd ../
-      - python3 -m venv .env && source .env/bin/activate && pip install -r requirements.txt
+      - python3 -m venv .env && . .env/bin/activate && pip install -r requirements.txt
       - ./kickoff_devicefarm.sh --action start-job
 artifacts:
   files:
