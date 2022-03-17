@@ -11,9 +11,15 @@ ENV ANDROID_HOME /opt/android-sdk
 # ------------------------------------------------------
 # --- Android SDK
 
-RUN apt-get update -y && \
+RUN set -ex && \
+    apt-get update -y && \
     apt-get -y --no-install-recommends upgrade && \
-    apt-get -y --no-install-recommends install python3.8-venv openjdk-8-jdk groff unzip && \
+    apt-get -y --no-install-recommends install \ 
+    python3.8 \
+    python3-pip \
+    openjdk-8-jdk \
+    groff \
+    unzip && \
     mkdir /opt/android-sdk && \                                                                                                     
     mkdir /opt/android-sdk-tmp && \
     cd /opt/android-sdk-tmp && \
