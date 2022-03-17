@@ -208,8 +208,7 @@ def device_farm_access_policy_in_json():
     :return: an IAM policy statement in json.
     """
     resources = []
-    resources.append("arn:aws:devicefarm:{}:{}:project:*".format(AWS_REGION, AWS_ACCOUNT))
-    resources.append("arn:aws:devicefarm:{}:{}:devicepool:*".format(AWS_REGION, AWS_ACCOUNT))
+    resources.append("arn:aws:devicefarm:{}:{}:*:*".format(AWS_REGION, AWS_ACCOUNT))
     return {
         "Version": "2012-10-17",
         "Statement": [
