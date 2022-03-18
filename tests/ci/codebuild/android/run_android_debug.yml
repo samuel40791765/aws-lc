@@ -4,16 +4,15 @@ phases:
   build:
     commands:
       - chmod +x ./tests/ci/android/AWSLCAndroidTestRunner/gradlew
-      - |
-        cd tests/ci/android/AWSLCAndroidTestRunner \
-        && mkdir $CODEBUILD_SRC_DIR/apk-artifacts
+      - cd tests/ci/android/AWSLCAndroidTestRunner
       - ./gradlew assembleDebug assembleAndroidTest
+      - mkdir $CODEBUILD_SRC_DIR/apk-artifacts
       - mv app/build/outputs/apk $CODEBUILD_SRC_DIR/apk-artifacts/non-fips-dbg
       - cd $CODEBUILD_SRC_DIR/tests/ci/
       - python3 -m venv .env && . .env/bin/activate && pip install -r requirements.txt
-      - |
-        ./kickoff_devicefarm_job.sh \
-        --test-name 'AWS-LC Android Debug Test' \
-        --main-apk $CODEBUILD_SRC_DIR/apk-artifacts/non-fips-dbg/debug/awslc_androidrunner_dbg.apk \
-        --test-apk $CODEBUILD_SRC_DIR/apk-artifacts/non-fips-dbg/androidTest/debug/awslc_androidrunner_dbg-androidTest.apk \
+      - >
+        ./kickoff_devicefarm_job.sh 
+        --test-name 'AWS-LC Android Debug Test' 
+        --main-apk $CODEBUILD_SRC_DIR/apk-artifacts/non-fips-dbg/debug/awslc_androidrunner_dbg.apk 
+        --test-apk $CODEBUILD_SRC_DIR/apk-artifacts/non-fips-dbg/androidTest/debug/awslc_androidrunner_dbg-androidTest.apk 
         --action start-job
