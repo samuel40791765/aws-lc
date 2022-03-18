@@ -40,7 +40,7 @@ function export_global_variables() {
     export ANDROID_APK='android/AWSLCAndroidTestRunner-artifacts/awslc_androidrunner_dbg.apk'
   fi
   if [[ -z "${ANDROID_TEST_APK+x}" || -z "${ANDROID_TEST_APK}" ]]; then
-    export ANDROID_TEST_APK='android/AWSLCAndroidTestRunner-artifacts/awslc_androidrunner_dbg-androidTest.apk'
+    export ANDROID_TEST_APK=''
   fi
   if [[ -z "${DEVICEFARM_PROJECT+x}" || -z "${DEVICEFARM_PROJECT}" ]]; then
     export DEVICEFARM_PROJECT='arn:aws:devicefarm:us-west-2:069218930244:project:a128dad3-02e1-4ee6-84b5-143ae81cc018'
@@ -67,11 +67,11 @@ function main() {
       shift
       ;;
     --main-apk)
-      export APK="${2}"
+      export ANDROID_APK="${2}"
       shift
       ;;
     --test-apk)
-      export TEST_APK="${2}"
+      export ANDROID_TEST_APK="${2}"
       shift
       ;;
     --devicefarm-project-arn)
