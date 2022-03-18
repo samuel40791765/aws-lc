@@ -7,13 +7,13 @@ import time
 import datetime
 import time
 import json
-from util.metadata import ANDROID_TEST_NAME, APK, TEST_APK, DEVICEFARM_PROJECT, DEVICEFARM_DEVICE_POOL
+from cdk.util.devicefarm_util import ANDROID_TEST_NAME, ANDROID_APK, ANDROID_TEST_APK, DEVICEFARM_PROJECT, DEVICEFARM_DEVICE_POOL
 
 
 config = {
     "namePrefix": ANDROID_TEST_NAME,
-    "appFilePath": APK,
-    "testPackage": TEST_APK,
+    "appFilePath": ANDROID_APK,
+    "testPackage": ANDROID_TEST_APK,
     "projectArn": DEVICEFARM_PROJECT,
     "poolArn": DEVICEFARM_DEVICE_POOL,
 }

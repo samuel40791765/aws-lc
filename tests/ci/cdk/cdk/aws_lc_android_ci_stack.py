@@ -3,7 +3,7 @@
 
 from aws_cdk import core, aws_codebuild as codebuild, aws_iam as iam, aws_codepipeline as codepipeline, aws_s3 as s3, aws_codepipeline_actions as codepipeline_actions
 from util.ecr_util import ecr_arn
-from util.iam_policies import code_build_batch_policy_in_json, s3_read_write_policy_in_json, device_farm_access_policy_in_json
+from util.iam_policies import code_build_batch_policy_in_json, device_farm_access_policy_in_json
 from util.metadata import AWS_ACCOUNT, AWS_REGION, GITHUB_REPO_OWNER, GITHUB_REPO_NAME
 from util.yml_loader import YmlLoader
 
@@ -45,13 +45,10 @@ class AwsLcAndroidCIStack(core.Stack):
         code_build_batch_policy = iam.PolicyDocument.from_json(
             code_build_batch_policy_in_json([id])
         )
-        s3_read_write_policy = iam.PolicyDocument.from_json(
-            s3_read_write_policy_in_json(s3_bucket_name)
-        )
         device_farm_policy = iam.PolicyDocument.from_json(
             device_farm_access_policy_in_json()
         )
-        inline_policies = {"code_build_batch_policy": code_build_batch_policy, "device_farm_policy": device_farm_policy, "s3_read_write_policy": s3_read_write_policy}
+        inline_policies = {"code_build_batch_policy": code_build_batch_policy, "device_farm_policy": device_farm_policy}
         role = iam.Role(scope=self,
                         id="{}-role".format(id),
                         assumed_by=iam.ServicePrincipal("codebuild.amazonaws.com"),
