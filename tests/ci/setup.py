@@ -31,7 +31,6 @@ setuptools.setup(
         # Introduced by benchmark framework.
         "boto3==1.18.11",
         # Introduced by Android Device Farm CI.
-        "boto3==1.18.11",
         "requests"
     ],
 
