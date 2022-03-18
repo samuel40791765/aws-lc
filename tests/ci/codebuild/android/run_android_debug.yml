@@ -10,7 +10,7 @@ phases:
       - mv app/build/outputs/apk "$CODEBUILD_SRC_DIR/apk-artifacts/non-fips-dbg"
       - APK="$CODEBUILD_SRC_DIR/apk-artifacts/non-fips-dbg/debug/awslc_androidrunner_dbg.apk"
       - TEST_APK="$CODEBUILD_SRC_DIR/apk-artifacts/non-fips-dbg/androidTest/debug/awslc_androidrunner_dbg-androidTest.apk"
-      - cd tests/ci/cdk/
+      - cd "$CODEBUILD_SRC_DIR/tests/ci/cdk/"
       - python3 -m venv .env && . .env/bin/activate && pip install -r requirements.txt
       - ./kickoff_devicefarm.sh --action start-job
 artifacts:
