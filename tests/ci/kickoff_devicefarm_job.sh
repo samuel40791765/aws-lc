@@ -36,10 +36,10 @@ function export_global_variables() {
   if [[ -z "${ANDROID_TEST_NAME+x}" || -z "${ANDROID_TEST_NAME}" ]]; then
     export ANDROID_TEST_NAME='AWS-LC Android non-FIPS Debug'
   fi
-  if [[ -z "${APK+x}" || -z "${APK}" ]]; then
+  if [[ -z "${ANDROID_APK+x}" || -z "${ANDROID_APK}" ]]; then
     export ANDROID_APK='android/AWSLCAndroidTestRunner-artifacts/awslc_androidrunner_dbg.apk'
   fi
-  if [[ -z "${TEST_APK+x}" || -z "${TEST_APK}" ]]; then
+  if [[ -z "${ANDROID_TEST_APK+x}" || -z "${ANDROID_TEST_APK}" ]]; then
     export ANDROID_TEST_APK='android/AWSLCAndroidTestRunner-artifacts/awslc_androidrunner_dbg-androidTest.apk'
   fi
   if [[ -z "${DEVICEFARM_PROJECT+x}" || -z "${DEVICEFARM_PROJECT}" ]]; then
