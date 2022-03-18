@@ -9,11 +9,11 @@ setuptools.setup(
     name="AWS-LC CI",
     version="0.0.1",
 
-    description="AWS-LC CI related python operations.",
+    description="AWS-LC CI python environment.",
     long_description=long_description,
     long_description_content_type="text/markdown",
 
-    author="author",
+    author="AWS-LC",
 
     package_dir={"": "cdk"},
     packages=setuptools.find_packages(where="cdk"),

@@ -32,15 +32,9 @@ EOF
 }
 
 function export_global_variables() {
-  # If these variables are not set or empty, defaults are exported.
+  # If these variables are not set or empty, defaults are exported, but the |main-apk| and |test-apk| must be set.
   if [[ -z "${ANDROID_TEST_NAME+x}" || -z "${ANDROID_TEST_NAME}" ]]; then
     export ANDROID_TEST_NAME='AWS-LC Android non-FIPS Debug'
-  fi
-  if [[ -z "${ANDROID_APK+x}" || -z "${ANDROID_APK}" ]]; then
-    export ANDROID_APK='android/AWSLCAndroidTestRunner-artifacts/awslc_androidrunner_dbg.apk'
-  fi
-  if [[ -z "${ANDROID_TEST_APK+x}" || -z "${ANDROID_TEST_APK}" ]]; then
-    export ANDROID_TEST_APK=''
   fi
   if [[ -z "${DEVICEFARM_PROJECT+x}" || -z "${DEVICEFARM_PROJECT}" ]]; then
     export DEVICEFARM_PROJECT='arn:aws:devicefarm:us-west-2:069218930244:project:a128dad3-02e1-4ee6-84b5-143ae81cc018'

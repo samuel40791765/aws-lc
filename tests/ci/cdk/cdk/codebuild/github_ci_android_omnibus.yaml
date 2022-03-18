@@ -13,3 +13,17 @@ batch:
         privileged-mode: true
         compute-type: BUILD_GENERAL1_LARGE
         image: ECR_REPO_PLACEHOLDER:ubuntu-20.04_android_latest
+    - identifier: ubuntu2004_android_nonfips_release
+      buildspec: ./tests/ci/codebuild/android/run_android_release.yml
+      env:
+        type: LINUX_CONTAINER
+        privileged-mode: true
+        compute-type: BUILD_GENERAL1_LARGE
+        image: ECR_REPO_PLACEHOLDER:ubuntu-20.04_android_latest
+    - identifier: ubuntu2004_android_fips
+      buildspec: ./tests/ci/codebuild/android/run_android_fips.yml
+      env:
+        type: LINUX_CONTAINER
+        privileged-mode: true
+        compute-type: BUILD_GENERAL1_LARGE
+        image: ECR_REPO_PLACEHOLDER:ubuntu-20.04_android_latest

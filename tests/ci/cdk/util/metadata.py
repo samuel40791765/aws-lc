@@ -24,10 +24,3 @@ S3_BUCKET_NAME = EnvUtil.get("S3_FOR_WIN_DOCKER_IMG_BUILD", "aws-lc-windows-dock
 WIN_EC2_TAG_KEY = EnvUtil.get("WIN_EC2_TAG_KEY", "aws-lc")
 WIN_EC2_TAG_VALUE = EnvUtil.get("WIN_EC2_TAG_VALUE", "aws-lc-windows-docker-image-build")
 SSM_DOCUMENT_NAME = EnvUtil.get("WIN_DOCKER_BUILD_SSM_DOCUMENT", "windows-ssm-document")
-
-# Used for AWS Device Farm python kick off script.
-APK = EnvUtil.get("APK", None)
-TEST_APK = EnvUtil.get("TEST_APK", None)
-DEVICEFARM_PROJECT = EnvUtil.get("DEVICEFARM_PROJECT", "arn:aws:devicefarm:us-west-2:069218930244:project:a128dad3-02e1-4ee6-84b5-143ae81cc018")
-DEVICEFARM_DEVICE_POOL = EnvUtil.get("DEVICEFARM_DEVICE_POOL", "arn:aws:devicefarm:us-west-2:069218930244:devicepool:a128dad3-02e1-4ee6-84b5-143ae81cc018/42508cf7-c406-4cd8-983b-2c75da210b63")
-ANDROID_TEST_NAME = EnvUtil.get("ANDROID_TEST_NAME", "AWS-LC Android Test")
