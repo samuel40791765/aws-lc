@@ -17,13 +17,11 @@ set -exuo pipefail
 
 function script_helper() {
   cat <<EOF
-This script uses CDK to deploy/destroy AWS resources defined in the aws-lc cdk app.
-
-For aws-lc continuous integration setup, this script uses aws cli to build some non-AWS resources(e.g. Docker image).
+This script helps kick off the device farm python script with the arguments needed.
 
 Options:
     --help                          Displays this help menu
-    --test-name						Name of current test.
+    --test-name						          Name of current test.
     --main-apk                      The app apk to test upon.
     --test-apk                      The testing package apk which contains the test suites.
     --devicefarm-project-arn        The devicefarm project's arn. Default to team account's.
@@ -39,10 +37,10 @@ function export_global_variables() {
     export ANDROID_TEST_NAME='AWS-LC Android non-FIPS Debug'
   fi
   if [[ -z "${APK+x}" || -z "${APK}" ]]; then
-    export APK='AWSLCAndroidTestRunner-artifacts/awslc_androidrunner_dbg.apk'
+    export APK='../android/AWSLCAndroidTestRunner-artifacts/awslc_androidrunner_dbg.apk'
   fi
   if [[ -z "${TEST_APK+x}" || -z "${TEST_APK}" ]]; then
-    export TEST_APK='AWSLCAndroidTestRunner-artifacts/awslc_androidrunner_dbg-androidTest.apk'
+    export TEST_APK='../android/AWSLCAndroidTestRunner-artifacts/awslc_androidrunner_dbg-androidTest.apk'
   fi
   if [[ -z "${DEVICEFARM_PROJECT+x}" || -z "${DEVICEFARM_PROJECT}" ]]; then
     export DEVICEFARM_PROJECT='arn:aws:devicefarm:us-west-2:069218930244:project:a128dad3-02e1-4ee6-84b5-143ae81cc018'
@@ -109,7 +107,7 @@ function main() {
   # Execute the action.
   case ${ACTION} in
   start-job)
-    python3 devicefarm_job.py
+    python3 ./devicefarm_job.py
     ;;
   *)
     echo "--action is required. Use '--help' to see allowed actions."

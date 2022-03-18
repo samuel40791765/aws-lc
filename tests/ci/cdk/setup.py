@@ -6,10 +6,10 @@ with open("README.md") as fp:
 
 
 setuptools.setup(
-    name="cdk",
+    name="AWS-LC CI",
     version="0.0.1",
 
-    description="An empty CDK Python app",
+    description="AWS-LC CI related python operations.",
     long_description=long_description,
     long_description_content_type="text/markdown",
 
@@ -24,14 +24,15 @@ setuptools.setup(
         "aws-cdk.aws-codebuild==1.97.0",
         "aws-cdk.aws-ecr==1.97.0",
         "aws-cdk.aws-iam==1.97.0",
-        "aws-cdk.aws-codepipeline==1.97.0",
-        "aws-cdk.aws-codepipeline-actions==1.97.0",
         # PyYAML is a YAML parser and emitter for Python. Used to read build_spec.yaml.
         "pyyaml==5.3.1",
         # A formatter for Python code.
         "yapf==0.30.0",
         # Introduced by benchmark framework.
-        "boto3==1.18.11"
+        "boto3==1.18.11",
+        # Introduced by Android Device Farm CI.
+        "boto3==1.18.11",
+        "requests"
     ],
 
     python_requires=">=3.6",
