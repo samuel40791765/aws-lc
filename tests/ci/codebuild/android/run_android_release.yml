@@ -6,7 +6,6 @@ phases:
       - chmod +x ./tests/ci/android/AWSLCAndroidTestRunner/gradlew
       - cd tests/ci/android/AWSLCAndroidTestRunner
       - ./gradlew assembleDebug assembleAndroidTest -PRelease
-      - mkdir $CODEBUILD_SRC_DIR/apk-artifacts
       - mv app/build/outputs/apk $CODEBUILD_SRC_DIR/apk-artifacts
       - cd $CODEBUILD_SRC_DIR/tests/ci/
       - python3 -m venv .env && . .env/bin/activate && pip install -r requirements.txt
