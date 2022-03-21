@@ -1108,6 +1108,7 @@ TEST(ECTest, BrainpoolP256r1) {
 }
 
 #if !defined(AWSLC_FIPS)
+
 TEST(ECTest, SmallGroupOrder) {
   // Make a P-224 key and corrupt the group order to be small in order to fail
   // |EC_KEY_generate_key|.
@@ -1160,9 +1161,11 @@ TEST(ECTest, SmallGroupOrder) {
   ASSERT_TRUE(BN_set_word(&key2.get()->group->order, 7));
   ASSERT_FALSE(EC_KEY_generate_key_fips(key2.get()));
 }
+
 #else
 // AWSLCAndroidTestRunner does not take tests that do |ASSERT_DEATH| very well.
 #if !defined(OPENSSL_ANDROID)
+
 TEST(ECDeathTest, SmallGroupOrderAndDie) {
   // Make a P-224 key and corrupt the group order to be small in order to fail
   // |EC_KEY_generate_key|.
@@ -1213,8 +1216,9 @@ TEST(ECDeathTest, SmallGroupOrderAndDie) {
   ASSERT_TRUE(EC_KEY_set_group(key2.get(), group.get()));
   BN_clear(&key2.get()->group->order);
   ASSERT_TRUE(BN_set_word(&key2.get()->group->order, 7));
-  ASSERT_DEATH(EC_KEY_generate_key_fips(key2.get()), "");
+  ASSERT_DEATH_IF_SUPPORTED(EC_KEY_generate_key_fips(key2.get()), "");
 }
+
 #endif
 #endif
 
