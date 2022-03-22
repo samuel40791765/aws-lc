@@ -1,0 +1,17 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - chmod +x ./tests/ci/android/AWSLCAndroidTestRunner/gradlew
+      - cd tests/ci/android/AWSLCAndroidTestRunner
+      - ./gradlew assembleDebug assembleAndroidTest -PShared -PRelease
+      - mv app/build/outputs/apk $CODEBUILD_SRC_DIR/apk-artifacts
+      - cd $CODEBUILD_SRC_DIR/tests/ci/
+      - python3 -m venv .env && . .env/bin/activate && pip install -r requirements.txt
+      - >
+        ./kickoff_devicefarm_job.sh 
+        --test-name 'AWS-LC Android Sharedlib Release Test' 
+        --main-apk $CODEBUILD_SRC_DIR/apk-artifacts/debug/awslc_shared_rel.apk 
+        --test-apk $CODEBUILD_SRC_DIR/apk-artifacts/androidTest/debug/awslc_shared_rel-androidTest.apk 
+        --action start-job
