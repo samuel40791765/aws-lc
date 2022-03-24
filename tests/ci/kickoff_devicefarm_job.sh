@@ -51,7 +51,7 @@ function export_global_variables() {
       # Device pool arn for non-FIPS.
       export DEVICEFARM_DEVICE_POOL='arn:aws:devicefarm:us-west-2:069218930244:devicepool:e6898943-4414-4ab0-a5d5-b254e33ea53c/d62026d5-fb81-45f1-9ef4-2158d654708c'
     fi
-  fi
+  fim
 }
 
 function main() {
@@ -111,7 +111,9 @@ function main() {
   # Execute the action.
   case ${ACTION} in
   start-job)
+    set -x
     python3 ./devicefarm_job.py
+    set +x
     ;;
   *)
     echo "--action is required. Use '--help' to see allowed actions."
