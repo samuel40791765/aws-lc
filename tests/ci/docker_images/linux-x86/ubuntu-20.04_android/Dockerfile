@@ -5,6 +5,9 @@ FROM ubuntu:20.04
 
 SHELL ["/bin/bash", "-c"]
 
+ENV DEBIAN_FRONTEND=noninteractive
+
+
 ENV ANDROID_SDK_URL sdk-tools-linux-3859397
 ENV ANDROID_HOME /opt/android-sdk
 
@@ -14,11 +17,13 @@ ENV ANDROID_HOME /opt/android-sdk
 RUN set -ex && \
     apt-get update -y && \
     apt-get -y --no-install-recommends upgrade && \
-    apt-get -y --no-install-recommends install \ 
+    apt-get -y --no-install-recommends install \
     python3.8 \
     python3-pip \
     openjdk-8-jdk \
     groff \
+    perl \
+    libunwind-dev \
     wget \
     unzip && \
 # install go dependencies

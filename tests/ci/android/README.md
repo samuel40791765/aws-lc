@@ -8,7 +8,7 @@ AWS-LC wants to ensure that our tests and build work correctly on Android. Insip
    ```
    docker run -it -v `pwd`:`pwd` -w `pwd` ubuntu-20.04:android`
    ```
-4. `cd AWSLCAndroidTestRunner`
+4. `cd tests/ci/android/AWSLCAndroidTestRunner`
 5. Run `./gradlew assembleDebug assembleAndroidTest` to build both the app and test apks with the AWS-LC non-FIPS debug build.
 6. Run `./gradlew assembleDebug assembleAndroidTest -PRelease` to build both the app and test apks with the AWS-LC non-FIPS release build.
 7. Run `./gradlew assembleDebug assembleAndroidTest -PFIPS` to build both the app and test apks with the AWS-LC FIPS build (only armv8 is supported).
@@ -27,11 +27,14 @@ Alternatively run `./gradlew cC` to build both apks, then run the tests locally 
 Although the Android CI's codebuild resources are integrated with our current CI infrastructure, it also relies on additional Device Farm resources to run the real device tests after cross-compiling within Codebuild. To update the cdk/docker images for Android, refer to `aws-lc/tests/ci/cdk/README.md`. The cdk action type would be `update-android-ci`. To configure the device farm resources needed, steps on how to do so are provided below.
 
 ## Setup Device Farm CI Resources
-1. Sign in to our team's account and access the Device Farm console at https://console.aws.amazon.com/devicefarm.
-2. On the Device Farm navigation panel, choose Mobile Device Testing, then choose Projects.
-3. Choose New project.
-4. Enter a name for your project, then choose Submit. Our current project name is `aws-lc-android-ci`. No specific settings need to be specified. 
-5. Go to the settings of the device farm project you just created and click into the `Device pools` tab. From there, you can create device pools specifying conditions and devices that you wish to test upon.
-6. Once all resources are created from the console, we'll be using the `aws cli` to retrieve the ARNs of our Device Farm project and Device Pools. Paste your Isengard credentials inside a terminal.
-7. Use `aws devicefarm list-projects` to get your project's ARN. Retrieve the ARN corresponding to your project name, and run the `aws-lc/tests/ci/kickoff_devicefarm_job.sh` script with `--devicefarm-project-arn` specified with the retrieved ARN. If we're updating our team account, change the `DEVICEFARM_PROJECT` variable to the new project ARN.
-8. Use `aws devicefarm  list-device-pools --arn ${project_arn}` to get your project's ARN. Retrieve the ARN corresponding to your device pool(s), and run the `aws-lc/tests/ci/kickoff_devicefarm_job.sh` script with `--devicefarm-device-pool-arn` specified with the retrieved ARN. If we're updating our team account, change the `DEVICEFARM_DEVICE_POOL` variable to the new device pool ARN.
+1. We'll be using `aws cli` to retrieve the ARNs of our Device Farm project and Device Pools. Paste account's Isengard credentials inside a terminal to sign in. 
+2. Run `aws devicefarm create-project --name ${project_name}` Save the arn ouputted after running the command as `${project_arn}`. Our current project name is `aws-lc-android-ci`.
+3. Run the following command to create the FIPS Device Pool: 
+```
+aws devicefarm create-device-pool --project-arn ${project_arn} --name "aws-lc-device-pool-fips" --description "AWS-LC FIPS Device Pool" --rules file://devicepool_fips.json --max-devices 2
+```
+4. Run the following command to create the non-FIPS Device Pool: 
+```
+aws devicefarm create-device-pool --project-arn ${project_arn} --name "aws-lc-device-pool" --description "AWS-LC Device Pool" --rules file://devicepool_rules.json --max-devices 2
+```
+5. Use the project arn and the corresponding device pool arns that wish to be tested upon, and run the `../ci/kickoff_devicefarm_job.sh` script with `--devicefarm-project-arn` and `--devicefarm-device-pool-arn` specified with the specified values. If we're updating our team account, change the `DEVICEFARM_PROJECT` and the `DEVICEFARM_DEVICE_POOL` variable to the new values.
