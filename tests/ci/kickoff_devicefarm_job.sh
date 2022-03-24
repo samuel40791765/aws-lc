@@ -25,7 +25,8 @@ Options:
     --main-apk                      The app apk to test upon.
     --test-apk                      The testing package apk which contains the test suites.
     --devicefarm-project-arn        The devicefarm project's arn. Default to team account's.
-    --devicefarm-device-pool-arn    The device pool's arn. 
+    --devicefarm-device-pool-arn    The device pool's arn.
+    --fips-test                     Used to direct the default device pool arn value for fips/non-fips, if devicefarm-device-pool-arn is not set. The default value is false.
     --action                        Required. The value can be:
 	                                   'start-job': kicks off a device farm job.
 EOF
@@ -37,10 +38,19 @@ function export_global_variables() {
     export ANDROID_TEST_NAME='AWS-LC Android non-FIPS Debug'
   fi
   if [[ -z "${DEVICEFARM_PROJECT+x}" || -z "${DEVICEFARM_PROJECT}" ]]; then
-    export DEVICEFARM_PROJECT='arn:aws:devicefarm:us-west-2:069218930244:project:a128dad3-02e1-4ee6-84b5-143ae81cc018'
+    export DEVICEFARM_PROJECT='arn:aws:devicefarm:us-west-2:069218930244:project:e6898943-4414-4ab0-a5d5-b254e33ea53c'
+  fi
+  if [[ -z "${TESTING_FIPS+x}" || -z "${TESTING_FIPS}" ]]; then 
+    export TESTING_FIPS=false
   fi
   if [[ -z "${DEVICEFARM_DEVICE_POOL+x}" || -z "${DEVICEFARM_DEVICE_POOL}" ]]; then
-    export DEVICEFARM_DEVICE_POOL='arn:aws:devicefarm:us-west-2:069218930244:devicepool:a128dad3-02e1-4ee6-84b5-143ae81cc018/42508cf7-c406-4cd8-983b-2c75da210b63'
+    if [[ "${TESTING_FIPS}" = true ]]; then
+      # Device pool arn for FIPS.
+      export DEVICEFARM_DEVICE_POOL='arn:aws:devicefarm:us-west-2:069218930244:devicepool:e6898943-4414-4ab0-a5d5-b254e33ea53c/ba9f292c-6f3b-4364-9c85-88d9aca371ce'
+    else
+      # Device pool arn for non-FIPS.
+      export DEVICEFARM_DEVICE_POOL='arn:aws:devicefarm:us-west-2:069218930244:devicepool:e6898943-4414-4ab0-a5d5-b254e33ea53c/d62026d5-fb81-45f1-9ef4-2158d654708c'
+    fi
   fi
   # Other variables for managing resources.
   # DATE_NOW="$(date +%Y-%m-%d-%H-%M)"
@@ -74,6 +84,10 @@ function main() {
       ;;
     --devicefarm-device-pool-arn)
       export DEVICEFARM_DEVICE_POOL="${2}"
+      shift
+      ;;
+    --fips-test)
+      export TESTING_FIPS="${2}"
       shift
       ;;
     --action)

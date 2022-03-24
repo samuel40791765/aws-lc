@@ -67,9 +67,13 @@ response = client.schedule_run(
         }
     )
 run_arn = response['run']['arn']
+project_arn_id = config['projectArn'].split(':')[6]
+run_arn_id = run_arn.split('/')[1]
+run_url = "https://us-west-2.console.aws.amazon.com/devicefarm/home?region=us-west-2#/mobile/projects/" + \
+            project_arn_id + "/runs/" + run_arn_id
 start_time = datetime.datetime.now()
-print(f"Run {unique} is scheduled as arn {run_arn} ")
-
+print(f"\n\nRun {unique} is scheduled as arn: {run_arn} ")
+print(f"Run can be observed at URL: {run_url} \n\n")
 try:
 
     while True:
@@ -84,41 +88,13 @@ except:
     # If something goes wrong in this process, we stop the run and exit. 
 
     client.stop_run(arn=run_arn)
+    print(f"Run stopped due to something wrong.")
     exit(1)
-print(f"Tests finished in state {state} after "+str(datetime.datetime.now() - start_time))
-# now, we pull all the logs.
-jobs_response = client.list_jobs(arn=run_arn)
-# Save the output somewhere. We're using the unique value, but you could use something else
-save_path = os.path.join(os.getcwd(), unique)
-os.mkdir(save_path)
-# Save the last run information
-for job in jobs_response['jobs'] :
-    # Make a directory for our information
-    job_name = job['name']
-    os.makedirs(os.path.join(save_path, job_name), exist_ok=True)
-    # Get each suite within the job
-    suites = client.list_suites(arn=job['arn'])['suites']
-    for suite in suites:
-        for test in client.list_tests(arn=suite['arn'])['tests']:
-            # Get the artifacts
-            for artifact_type in ['FILE','SCREENSHOT','LOG']:
-                artifacts = client.list_artifacts(
-                    type=artifact_type,
-                    arn = test['arn']
-                )['artifacts']
-                for artifact in artifacts:
-                    # We replace : because it has a special meaning in Windows & macos
-                    path_to = os.path.join(save_path, job_name, suite['name'], test['name'].replace(':','_') )
-                    os.makedirs(path_to, exist_ok=True)
-                    filename = artifact['type']+"_"+artifact['name']+"."+artifact['extension']
-                    artifact_save_path = os.path.join(path_to, filename)
-                    print("Downloading "+artifact_save_path)
-                    with open(artifact_save_path, 'wb') as fn, requests.get(artifact['url'],allow_redirects=True) as request:
-                        fn.write(request.content)
-                    #/for artifact in artifacts
-                #/for artifact type in []
-            #/ for test in ()[]
-        #/ for suite in suites
-    #/ for job in _[]
-# done
-print(config['namePrefix'] + "Finished")
+
+# Check result of device farm run.
+result = response['run']['result']
+print(f"Tests finished in state {result} after "+str(datetime.datetime.now() - start_time))
+print(config['namePrefix'] + " Finished")
+if result != 'PASSED':
+    exit(1)
+

@@ -31,7 +31,7 @@ Although the Android CI's codebuild resources are integrated with our current CI
 2. Run `aws devicefarm create-project --name ${project_name}` Save the arn ouputted after running the command as `${project_arn}`. Our current project name is `aws-lc-android-ci`.
 3. Run the following command to create the FIPS Device Pool: 
 ```
-aws devicefarm create-device-pool --project-arn ${project_arn} --name "aws-lc-device-pool-fips" --description "AWS-LC FIPS Device Pool" --rules file://devicepool_fips.json --max-devices 2
+aws devicefarm create-device-pool --project-arn ${project_arn} --name "aws-lc-device-pool-fips" --description "AWS-LC FIPS Device Pool" --rules file://devicepool_rules_fips.json --max-devices 2
 ```
 4. Run the following command to create the non-FIPS Device Pool: 
 ```
