@@ -97,4 +97,3 @@ print(f"Tests finished in state {result} after "+str(datetime.datetime.now() - s
 print(config['namePrefix'] + " Finished")
 if result != 'PASSED':
     exit(1)
-
