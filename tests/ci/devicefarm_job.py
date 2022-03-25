@@ -20,7 +20,7 @@ config = {
 
 client = boto3.client('devicefarm')
 
-unique = config['namePrefix']+"-"+(datetime.date.today().isoformat())
+unique = config['namePrefix']
 
 print(f"The unique identifier for this run is going to be {unique} -- all uploads will be prefixed with this.")
 
