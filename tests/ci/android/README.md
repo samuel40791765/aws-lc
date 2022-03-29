@@ -7,7 +7,6 @@ The commands below help build the app within our Android CI's docker image. The 
 2. `docker build -t ubuntu-20.04:android ../docker_images/linux-x86/ubuntu-20.04_android/`
 3. Run the docker image from root of aws-lc. The container needs access to aws-lc's source code to build.
    ```
-   docker run -it -v `pwd`:`pwd` -w `pwd` ubuntu-20.04:android`
    cd ../../../
    docker run -it -v `pwd`:`pwd` -w `pwd` ubuntu-20.04:android
    ```
