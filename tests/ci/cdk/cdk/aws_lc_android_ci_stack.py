@@ -32,7 +32,7 @@ class AwsLcAndroidCIStack(core.Stack):
                     codebuild.EventAction.PULL_REQUEST_UPDATED,
                     codebuild.EventAction.PULL_REQUEST_REOPENED)
             ],
-            clone_depth=1)
+            webhook_triggers_batch_build=True)
 
         # Define a IAM role for this stack.
         code_build_batch_policy = iam.PolicyDocument.from_json(
