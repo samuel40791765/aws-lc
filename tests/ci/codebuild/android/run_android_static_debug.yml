@@ -9,9 +9,9 @@ phases:
       - >
         ./kickoff_devicefarm_job.sh
         --test-name "AWS-LC Android FIPS ${CODEBUILD_RESOLVED_SOURCE_VERSION}"
-        --main-apk app/build/outputs/apk/debug/awslc_fips.apk
-        --test-apk app/build/outputs/apk/androidTest/debug/awslc_fips-androidTest.apk
-        --fips true
+        --main-apk app/build/outputs/apk/debug/awslc_static_dbg.apk
+        --test-apk app/build/outputs/apk/androidTest/debug/awslc_static_dbg-androidTest.apk
+        --fips false
         --release false
         --shared false
         --action start-job
