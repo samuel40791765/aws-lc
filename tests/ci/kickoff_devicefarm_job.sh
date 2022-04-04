@@ -17,13 +17,11 @@ set -exuo pipefail
 
 function script_helper() {
   cat <<EOF
-This script helps kick off the device farm python script with the arguments needed.
+This script helps compile AWSLCAndroidTestRunner and kick off the device farm python script with the arguments needed.
 
 Options:
     --help                          Displays this help menu
     --test-name						          Name of current test.
-    --main-apk                      The app apk to test upon.
-    --test-apk                      The testing package apk which contains the test suites.
     --devicefarm-project-arn        The devicefarm project's arn. Default to team account's.
     --devicefarm-device-pool-arn    The device pool's arn.
     --fips                          If we're compiling for FIPS or not. Will always compile for the FIPS, shared, release build.
@@ -37,13 +35,19 @@ EOF
 function export_global_variables() {
   # If these variables are not set or empty, defaults are exported, but the |main-apk| and |test-apk| must be set.
   if [[ -z "${ANDROID_TEST_NAME+x}" || -z "${ANDROID_TEST_NAME}" ]]; then
-    export ANDROID_TEST_NAME='AWS-LC Android non-FIPS Debug'
+    export ANDROID_TEST_NAME='AWS-LC Android Test'
   fi
   if [[ -z "${DEVICEFARM_PROJECT+x}" || -z "${DEVICEFARM_PROJECT}" ]]; then
     export DEVICEFARM_PROJECT='arn:aws:devicefarm:us-west-2:069218930244:project:e6898943-4414-4ab0-a5d5-b254e33ea53c'
   fi
   if [[ -z "${FIPS+x}" || -z "${FIPS}" ]]; then
     export FIPS=false
+  fi
+  if [[ -z "${RELEASE+x}" || -z "${RELEASE}" ]]; then
+    export RELEASE=false
+  fi
+  if [[ -z "${SHARED+x}" || -z "${SHARED}" ]]; then
+    export SHARED=false
   fi
   if [[ -z "${DEVICEFARM_DEVICE_POOL+x}" || -z "${DEVICEFARM_DEVICE_POOL}" ]]; then
     if [[ "${FIPS}" = true ]]; then
@@ -57,21 +61,32 @@ function export_global_variables() {
 }
 
 function compile_for_android() {
+  # |ANDROID_APK| and |ANDROID_TEST_APK| are apk names corresponding to the settings in the test runner gradle file.
   cd android/AWSLCAndroidTestRunner
   if [[ "${FIPS}" = true ]]; then
     ./gradlew assembleDebug assembleAndroidTest -PFIPS
+    export ANDROID_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/debug/awslc_fips.apk'
+    export ANDROID_TEST_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/androidTest/debug/awslc_fips-androidTest.apk'
   else
     if [[ "${RELEASE}" = true ]]; then
       if [[ "${SHARED}" = true ]]; then
         ./gradlew assembleDebug assembleAndroidTest -PRelease -PShared
+        export ANDROID_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/debug/awslc_shared_rel.apk'
+        export ANDROID_TEST_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/androidTest/debug/awslc_shared_rel-androidTest.apk'
       else
         ./gradlew assembleDebug assembleAndroidTest -PRelease
+        export ANDROID_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/debug/awslc_static_rel.apk'
+        export ANDROID_TEST_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/androidTest/debug/awslc_static_rel-androidTest.apk'
       fi
     else
       if [[ "${SHARED}" = true ]]; then
         ./gradlew assembleDebug assembleAndroidTest -PShared
+        export ANDROID_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/debug/awslc_shared_dbg.apk'
+        export ANDROID_TEST_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/androidTest/debug/awslc_shared_dbg-androidTest.apk'
       else
         ./gradlew assembleDebug assembleAndroidTest
+        export ANDROID_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/debug/awslc_static_dbg.apk'
+        export ANDROID_TEST_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/androidTest/debug/awslc_static_dbg-androidTest.apk'
       fi
     fi
   fi
@@ -88,14 +103,6 @@ function main() {
       ;;
     --test-name)
       export ANDROID_TEST_NAME="${2}"
-      shift
-      ;;
-    --main-apk)
-      export ANDROID_APK="${2}"
-      shift
-      ;;
-    --test-apk)
-      export ANDROID_TEST_APK="${2}"
       shift
       ;;
     --devicefarm-project-arn)
