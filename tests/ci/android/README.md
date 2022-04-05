@@ -1,6 +1,8 @@
 # Android CI for AWS-LC
 AWS-LC wants to ensure that our tests and build work correctly on Android. Insipred from the CRT Team's [`AWSCRTAndroidTestRunner`](https://github.com/awslabs/aws-c-common/tree/main/AWSCRTAndroidTestRunner), this mini Android test harness is intended to be used within our Android CI with AWS Device Farm. The tests will include `crypto_test`, `urandom_test`, `decrepit_test` and `ssl_test`, referenced from regular test dimensions. This app can be tested with the docker image at `tests/ci/docker_images/linux-x86/ubuntu-20.04_android`.
 
+Our android CI cross-compiles AWS-LC using AWSLCAndroidTestRunner and the NDK toolchains in Codebuild. The current cross-compilation types are `x86_64`,`armeabi-v7a`, `arm64-v8a` for non-FIPS and `arm64-v8a` for FIPS. After cross-compilation is complete, we kick off real time device testing in AWS Device Farm from Codebuild using `tests/ci/kickoff_devicefarm_job.sh`, `boto3`, and the apk artifacts created.
+
 ## Setup
 The commands below help build the app within our Android CI's docker image. The docker image is only made to support cross-compiling AWS-LC with Android toolchains, building the `AWSLCAndroidTestRunner` apks, and uploading and kicking off the tests in AWS Device Farm. Running and testing on connected Android devices or emulators via `./gradlew cC` isn't configured within the docker image.
 1. Assuming all the commands are being run from this folder: `cd tests/ci/android`
@@ -26,21 +28,10 @@ Emulators are not easily configurable out of the box on Linux, and it would be b
 4. Select "Pixel 2" (or any of the newer preferred options), then select "x86" images and download R (API Level:30, ABI:x86_64, Android 11.0 (Google APIs)). Click through the rest of the virtual device set up and then "Finish". The newly created device should be launchable from the AVD Manager window.
 5. Run `./gradlew cC` on `AWSLCAndroidTestRunner`, and the emulator will be automatically detected. Outputted debug logs from the emulator device can be seen from the log interface in any blank project created in Android Studio. You can also use `awslc-test` tag to filter through specific logs outputted from running `AWSLCAndroidTestRunner`.
 
-## Updating the Android CI
-Although the Android CI's codebuild resources are integrated with our current CI infrastructure, it also relies on additional Device Farm resources to run the real device tests after cross-compiling within Codebuild. To update the cdk/docker images for Android, refer to `tests/ci/cdk/README.md`. The cdk action type would be `update-android-ci`. To configure the device farm resources needed, steps on how to do so are provided below.
-
 ## Setup Device Farm CI Resources
-1. We'll be using `aws cli` to retrieve the ARNs of our Device Farm project and Device Pools. Paste account's Isengard credentials inside a terminal to sign in. 
-2. Run `aws devicefarm create-project --name ${project_name}` Save the arn ouputted after running the command as `${project_arn}`. Our current project name is `aws-lc-android-ci`.
-3. Our FIPS device farm CI is set up to run on two random Android devices with at least Android 11. Run the following command to create the FIPS Device Pool: 
-```
-aws devicefarm create-device-pool --project-arn ${project_arn} --name "aws-lc-device-pool-fips" --description "AWS-LC FIPS Device Pool" --rules file://devicepool_rules_fips.json --max-devices 2
-```
-4. Our non-FIPS device farm CI is set up to run on two random Android devices with at least Android 10. Run the following command to create the non-FIPS Device Pool: 
-```
-aws devicefarm create-device-pool --project-arn ${project_arn} --name "aws-lc-device-pool" --description "AWS-LC Device Pool" --rules file://devicepool_rules.json --max-devices 2
-```
-5. Use the project arn and the corresponding device pool arns that wish to be tested upon, and run the `tests/ci/kickoff_devicefarm_job.sh` script with `--devicefarm-project-arn` and `--devicefarm-device-pool-arn` specified with the specified values. If we're updating our team account, change the `DEVICEFARM_PROJECT` and the `DEVICEFARM_DEVICE_POOL` variable to the new values.
+Although the Android CI's codebuild resources are integrated with our current CI infrastructure, it also relies on additional Device Farm resources to run the real device tests after cross-compiling within Codebuild. Using the cdk action type `update-android-resources` will create the AWS Device Farm resources the CI needs. For steps on how to use the cdk script, refer to `tests/ci/cdk/README.md`.
+
+Running `update-android-resources` with the cdk script will print out the project arn and the corresponding device pool arns (FIPS/non-FIPS) that were created. The `tests/ci/kickoff_devicefarm_job.sh` script can be ran with `--devicefarm-project-arn` and `--devicefarm-device-pool-arn` specified with the created values. If we're updating our team account, change the `DEVICEFARM_PROJECT` and the `DEVICEFARM_DEVICE_POOL` variables to the new values.
 
 ## Known Issues
 `AWSLCAndroidTestRunner` is built by building the `aws-lc` test executuables as shared objects to be ran inside the android app. This approach works for most cases, but devices that run OS versions of Android 10 have been known to fail with the FIPS version of `AWSLCAndroidTestRunner`. This is because Android 10 has an "Execute-only Memory (XOM) for AArch64 Binaries" restriction turned on in Android 10 kernels, which clashes with the `bcm.o` in FIPS trying to read test related files/memory during FIPS test executing. \
