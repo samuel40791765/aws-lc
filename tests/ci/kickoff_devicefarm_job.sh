@@ -63,30 +63,31 @@ function export_global_variables() {
 function compile_for_android() {
   # |ANDROID_APK| and |ANDROID_TEST_APK| are apk names corresponding to the settings in the test runner gradle file.
   cd android/AWSLCAndroidTestRunner
+  export ANDROID_APK_LOCATION='android/AWSLCAndroidTestRunner/app/build/outputs/apk'
   if [[ "${FIPS}" = true ]]; then
     ./gradlew assembleDebug assembleAndroidTest -PFIPS
-    export ANDROID_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/debug/awslc_fips.apk'
-    export ANDROID_TEST_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/androidTest/debug/awslc_fips-androidTest.apk'
+    export ANDROID_APK="${ANDROID_APK_LOCATION}/debug/awslc_fips.apk"
+    export ANDROID_TEST_APK="${ANDROID_APK_LOCATION}/androidTest/debug/awslc_fips-androidTest.apk"
   else
     if [[ "${RELEASE}" = true ]]; then
       if [[ "${SHARED}" = true ]]; then
         ./gradlew assembleDebug assembleAndroidTest -PRelease -PShared
-        export ANDROID_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/debug/awslc_shared_rel.apk'
-        export ANDROID_TEST_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/androidTest/debug/awslc_shared_rel-androidTest.apk'
+        export ANDROID_APK="${ANDROID_APK_LOCATION}/debug/awslc_shared_rel.apk"
+        export ANDROID_TEST_APK="${ANDROID_APK_LOCATION}/androidTest/debug/awslc_shared_rel-androidTest.apk"
       else
         ./gradlew assembleDebug assembleAndroidTest -PRelease
-        export ANDROID_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/debug/awslc_static_rel.apk'
-        export ANDROID_TEST_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/androidTest/debug/awslc_static_rel-androidTest.apk'
+        export ANDROID_APK="${ANDROID_APK_LOCATION}/debug/awslc_static_rel.apk"
+        export ANDROID_TEST_APK="${ANDROID_APK_LOCATION}/androidTest/debug/awslc_static_rel-androidTest.apk"
       fi
     else
       if [[ "${SHARED}" = true ]]; then
         ./gradlew assembleDebug assembleAndroidTest -PShared
-        export ANDROID_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/debug/awslc_shared_dbg.apk'
-        export ANDROID_TEST_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/androidTest/debug/awslc_shared_dbg-androidTest.apk'
+        export ANDROID_APK="${ANDROID_APK_LOCATION}/debug/awslc_shared_dbg.apk"
+        export ANDROID_TEST_APK="${ANDROID_APK_LOCATION}/androidTest/debug/awslc_shared_dbg-androidTest.apk"
       else
         ./gradlew assembleDebug assembleAndroidTest
-        export ANDROID_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/debug/awslc_static_dbg.apk'
-        export ANDROID_TEST_APK='android/AWSLCAndroidTestRunner/app/build/outputs/apk/androidTest/debug/awslc_static_dbg-androidTest.apk'
+        export ANDROID_APK="${ANDROID_APK_LOCATION}/debug/awslc_static_dbg.apk"
+        export ANDROID_TEST_APK="${ANDROID_APK_LOCATION}/androidTest/debug/awslc_static_dbg-androidTest.apk"
       fi
     fi
   fi
