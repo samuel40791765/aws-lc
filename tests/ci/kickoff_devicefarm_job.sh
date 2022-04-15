@@ -12,11 +12,11 @@ set -exuo pipefail
 #              non-zero error code.
 
 # Device Farm project to designate Device Farm runs. The two device pools defined below should also belong to this project.
-AWSLC_DEVICEFARM_PROJECT='arn:aws:devicefarm:us-west-2:620771051181:project:d1e78543-a776-49c5-9452-9a2b3448b728'
+AWSLC_DEVICEFARM_PROJECT='arn:aws:devicefarm:us-west-2:069218930244:project:e6898943-4414-4ab0-a5d5-b254e33ea53c'
 # Device pool arn for FIPS.
-AWSLC_FIPS_DEVICEFARM_DEVICE_POOL='arn:aws:devicefarm:us-west-2:620771051181:devicepool:d1e78543-a776-49c5-9452-9a2b3448b728/4726586b-cdbc-4dc0-98a5-38e7448e3691'
+AWSLC_FIPS_DEVICEFARM_DEVICE_POOL='arn:aws:devicefarm:us-west-2:069218930244:devicepool:e6898943-4414-4ab0-a5d5-b254e33ea53c/ba9f292c-6f3b-4364-9c85-88d9aca371ce'
 # Device pool arn for non-FIPS.
-AWSLC_NON_FIPS_DEVICEFARM_DEVICE_POOL='arn:aws:devicefarm:us-west-2:620771051181:devicepool:d1e78543-a776-49c5-9452-9a2b3448b728/4e72604c-86eb-41b6-9383-7797c04328b4'
+AWSLC_NON_FIPS_DEVICEFARM_DEVICE_POOL='arn:aws:devicefarm:us-west-2:069218930244:devicepool:e6898943-4414-4ab0-a5d5-b254e33ea53c/d62026d5-fb81-45f1-9ef4-2158d654708c'
 
 ###########################
 # Main and related helper #
@@ -78,31 +78,31 @@ function compile_for_android() {
   export ANDROID_APK_LOCATION='android/AWSLCAndroidTestRunner/app/build/outputs/apk'
   if [[ "${FIPS}" = true ]]; then
     # FIPS (Release Shared)
-    ./gradlew assembleDebug assembleAndroidTest -PFIPS
+    ./gradlew assembleDebug assembleAndroidTest -PFIPS --offline
     export ANDROID_APK="${ANDROID_APK_LOCATION}/debug/awslc_fips.apk"
     export ANDROID_TEST_APK="${ANDROID_APK_LOCATION}/androidTest/debug/awslc_fips-androidTest.apk"
   else
     if [[ "${RELEASE}" = true ]]; then
       if [[ "${SHARED}" = true ]]; then
         # Release Shared
-        ./gradlew assembleDebug assembleAndroidTest -PRelease -PShared
+        ./gradlew assembleDebug assembleAndroidTest -PRelease -PShared --offline
         export ANDROID_APK="${ANDROID_APK_LOCATION}/debug/awslc_shared_rel.apk"
         export ANDROID_TEST_APK="${ANDROID_APK_LOCATION}/androidTest/debug/awslc_shared_rel-androidTest.apk"
       else
         # Release Static
-        ./gradlew assembleDebug assembleAndroidTest -PRelease
+        ./gradlew assembleDebug assembleAndroidTest -PRelease --offline
         export ANDROID_APK="${ANDROID_APK_LOCATION}/debug/awslc_static_rel.apk"
         export ANDROID_TEST_APK="${ANDROID_APK_LOCATION}/androidTest/debug/awslc_static_rel-androidTest.apk"
       fi
     else
       if [[ "${SHARED}" = true ]]; then
         # Debug Shared
-        ./gradlew assembleDebug assembleAndroidTest -PShared
+        ./gradlew assembleDebug assembleAndroidTest -PShared --offline
         export ANDROID_APK="${ANDROID_APK_LOCATION}/debug/awslc_shared_dbg.apk"
         export ANDROID_TEST_APK="${ANDROID_APK_LOCATION}/androidTest/debug/awslc_shared_dbg-androidTest.apk"
       else
         # Debug Static
-        ./gradlew assembleDebug assembleAndroidTest
+        ./gradlew assembleDebug assembleAndroidTest --offline
         export ANDROID_APK="${ANDROID_APK_LOCATION}/debug/awslc_static_dbg.apk"
         export ANDROID_TEST_APK="${ANDROID_APK_LOCATION}/androidTest/debug/awslc_static_dbg-androidTest.apk"
       fi
