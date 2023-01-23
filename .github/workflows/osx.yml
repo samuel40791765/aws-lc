@@ -28,3 +28,19 @@ jobs:
     - name: Build ${{ env.PACKAGE_NAME }} with FIPS mode
       run: |
         ./tests/ci/run_fips_tests.sh
+
+  macOS-arm:
+    runs-on: m1-mac-testing
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build ${{ env.PACKAGE_NAME }}
+      run: |
+        ./tests/ci/run_posix_tests.sh
+
+  macOS-arm-FIPS:
+    runs-on: m1-mac-testing
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build ${{ env.PACKAGE_NAME }} with FIPS mode
+      run: |
+        ./tests/ci/run_fips_tests.sh
