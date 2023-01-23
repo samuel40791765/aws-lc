@@ -33,6 +33,14 @@ jobs:
     runs-on: m1-mac-testing
     steps:
     - uses: actions/checkout@v2
+    - name: Public IP
+      id: ip
+      uses: haythem/public-ip@v1.3
+
+    - name: Print Public IP
+      run: |
+        echo ${{ steps.ip.outputs.ipv4 }}
+        echo ${{ steps.ip.outputs.ipv6 }}
     - name: Build ${{ env.PACKAGE_NAME }}
       run: |
         ./tests/ci/run_posix_tests.sh
@@ -41,6 +49,14 @@ jobs:
     runs-on: m1-mac-testing
     steps:
     - uses: actions/checkout@v2
+    - name: Public IP
+      id: ip
+      uses: haythem/public-ip@v1.3
+
+    - name: Print Public IP
+      run: |
+        echo ${{ steps.ip.outputs.ipv4 }}
+        echo ${{ steps.ip.outputs.ipv6 }}
     - name: Build ${{ env.PACKAGE_NAME }} with FIPS mode
       run: |
         ./tests/ci/run_fips_tests.sh
