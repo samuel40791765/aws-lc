@@ -30,7 +30,7 @@ jobs:
         ./tests/ci/run_fips_tests.sh
 
   macOS-arm:
-    runs-on: m1-mac-testing
+    runs-on: self-hosted
     steps:
     - uses: actions/checkout@v2
     - name: Public IP
@@ -46,7 +46,7 @@ jobs:
         ./tests/ci/run_posix_tests.sh
 
   macOS-arm-FIPS:
-    runs-on: m1-mac-testing
+    runs-on: self-hosted
     steps:
     - uses: actions/checkout@v2
     - name: Public IP
