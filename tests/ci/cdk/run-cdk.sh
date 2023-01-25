@@ -83,7 +83,7 @@ function create_win_docker_img_build_stack() {
 }
 
 function create_github_ci_stack() {
-  cdk deploy aws-lc-ci-* --require-approval never
+  cdk deploy aws-lc-ci-m1-test-framework --require-approval never
 }
 
 function run_linux_img_build() {

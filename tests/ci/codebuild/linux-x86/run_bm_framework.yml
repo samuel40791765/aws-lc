@@ -6,4 +6,4 @@ version: 0.2
 phases:
   build:
     commands:
-      - ./tests/ci/build_run_benchmarks.sh
+      - ./tests/ci/run_m1_ec2.sh
