@@ -55,7 +55,7 @@ ${m1_ssm_command_id}\$252F${ec2_instance}\$252FrunShellScript\$252Fstdout"
 echo "Actual Run in EC2 can be observered at CloudWatch URL: ${run_url}"
 
 # Give some time for the commands to run
-done=true
+done=false
 success=false
 for i in {1..45}; do
   echo "${i}: Continue to wait 2 min for SSM commands to finish."
@@ -67,8 +67,10 @@ for i in {1..45}; do
   if [[ ${ssm_command_status} == 'Success' && ${ssm_completed_count} == "${ssm_target_count}" ]]; then
     echo "SSM command ${m1_ssm_command_id} finished successfully."
     success=true
+    done=true
   elif [[ ${ssm_command_status} == 'Failed' && ${ssm_completed_count} == "${ssm_target_count}" ]]; then
     echo "SSM command ${m1_ssm_command_id} failed."
+    done=true
   else
     # Still running.
     done=false
