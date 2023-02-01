@@ -56,7 +56,7 @@ echo "Actual Run in EC2 can be observered at CloudWatch URL: ${run_url}"
 
 # Give some time for the commands to run
 done=true
-success=true
+success=false
 for i in {1..45}; do
   echo "${i}: Continue to wait 2 min for SSM commands to finish."
   sleep 120
@@ -66,10 +66,11 @@ for i in {1..45}; do
   ssm_completed_count="$(aws ssm list-commands --command-id "${m1_ssm_command_id}" --query Commands[*].CompletedCount --output text)"
   if [[ ${ssm_command_status} == 'Success' && ${ssm_completed_count} == "${ssm_target_count}" ]]; then
     echo "SSM command ${m1_ssm_command_id} finished successfully."
+    success=true
   elif [[ ${ssm_command_status} == 'Failed' && ${ssm_completed_count} == "${ssm_target_count}" ]]; then
     echo "SSM command ${m1_ssm_command_id} failed."
-    success=false
   else
+    # Still running.
     done=false
   fi
 
@@ -78,10 +79,14 @@ for i in {1..45}; do
     echo "M1 SSM command has finished."
 
     # if success is still true here, then none of the commands failed
-    if [ "${success}" != true ]; then
+    if [ "${success}" == true ]; then
+      echo "M1 SSM command succeeded!"
+      exit 0
+    else
       echo "M1 SSM command failed!"
       exit 1
     fi
     break
   fi
 done
+exit 1
