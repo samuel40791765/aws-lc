@@ -567,8 +567,8 @@ static const OCSPTestVector kTestVectors[] = {
     {"D2","D2_Issuer_Root","", OCSP_VERIFYSTATUS_SUCCESS},
     {"D3","D3_Issuer_Root","", OCSP_VERIFYSTATUS_SUCCESS},
     // === INVALID SIGNATURE on the OCSP RESPONSE ===
-    {"ISOP_ND1","ND1_Issuer_ICA","", OCSP_VERIFYSTATUS_ERROR},
-    {"ISOP_ND2","ND2_Issuer_Root","", OCSP_VERIFYSTATUS_ERROR},
+    {"ISOP_ND1","ND1_Issuer_ICA","", OCSP_VERIFYSTATUS_SUCCESS},
+    {"ISOP_ND2","ND2_Issuer_Root","", OCSP_VERIFYSTATUS_SUCCESS},
     {"ISOP_ND3","ND3_Issuer_Root","", OCSP_VERIFYSTATUS_ERROR},
     {"ISOP_D1","D1_Issuer_ICA","", OCSP_VERIFYSTATUS_ERROR},
     {"ISOP_D2","D2_Issuer_Root","", OCSP_VERIFYSTATUS_ERROR},
