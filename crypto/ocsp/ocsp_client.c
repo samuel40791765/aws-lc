@@ -9,7 +9,8 @@ int OCSP_response_status(OCSP_RESPONSE *resp) {
     OPENSSL_PUT_ERROR(OCSP, ERR_R_PASSED_NULL_PARAMETER);
     return -1;
   }
-  return ASN1_ENUMERATED_get(resp->responseStatus);
+
+  return (int)resp->responseStatus;
 }
 
 OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp) {
@@ -23,11 +24,12 @@ OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp) {
     OPENSSL_PUT_ERROR(OCSP, OCSP_R_NO_RESPONSE_DATA);
     return NULL;
   }
-  if (OBJ_obj2nid(rb->responseType) != NID_id_pkix_OCSP_basic) {
+  if (rb->nid != NID_id_pkix_OCSP_basic) {
     OPENSSL_PUT_ERROR(OCSP, OCSP_R_NOT_BASIC_RESPONSE);
     return NULL;
   }
-  return ASN1_item_unpack(rb->response, ASN1_ITEM_rptr(OCSP_BASICRESP));
+
+  return d2i_OCSP_BASICRESP(NULL, &rb->response_data, rb->response_len);
 }
 
 OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, size_t idx) {

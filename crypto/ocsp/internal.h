@@ -52,8 +52,11 @@ struct ocsp_signature_st {
 //       response       OCTET STRING }
 //
 struct ocsp_resp_bytes_st {
-  ASN1_OBJECT *responseType;
-  ASN1_OCTET_STRING *response;
+//  ASN1_OBJECT *responseType;
+//  ASN1_OCTET_STRING *response;
+  int nid;
+  const uint8_t *response_data;
+  size_t response_len;
 };
 
 //   OCSPResponse ::= SEQUENCE {
@@ -61,7 +64,8 @@ struct ocsp_resp_bytes_st {
 //      responseBytes    [0] EXPLICIT ResponseBytes OPTIONAL }
 //
 struct ocsp_response_st {
-  ASN1_ENUMERATED *responseStatus;
+//  ASN1_ENUMERATED *responseStatus;
+  uint8_t responseStatus;
   OCSP_RESPBYTES *responseBytes;
 };
 
