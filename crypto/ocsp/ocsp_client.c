@@ -1,8 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-#include "internal.h"
 #include "../asn1/internal.h"
+#include "internal.h"
 
 OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid) {
   OCSP_ONEREQ *one = OCSP_ONEREQ_new();

@@ -236,10 +236,6 @@ int OCSP_REQ_CTX_i2d(OCSP_REQ_CTX *rctx, const ASN1_ITEM *it, ASN1_VALUE *val);
 // Returns |OCSP_SINGLERESP| in the index of |OCSP_BASICRESP|.
 OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, size_t idx);
 
-// Returns index of |OCSP_SINGLERESP| in |OCSP_BASICRESP| matching a
-// given certificate ID, returns -1 if not found.
-int OCSP_resp_find(OCSP_BASICRESP *bs, OCSP_CERTID *id, int last);
-
 // Returns status of |OCSP_SINGLERESP|
 //
 // Note: 1. Reason value is allowed to be null.
