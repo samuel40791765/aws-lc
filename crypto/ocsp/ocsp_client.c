@@ -1,6 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+#include "../asn1/internal.h"
 #include "internal.h"
 
 OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid) {
@@ -246,4 +247,59 @@ int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
     *status = single_status;
   }
   return 1;
+}
+
+int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
+                        ASN1_GENERALIZEDTIME *nextupd, long nsec, long maxsec) {
+  int ret = 1;
+  int64_t t_tmp;
+  int64_t t_now = time(NULL);
+
+  // Check |thisUpdate| is valid and not more than |nsec| in the future.
+  if (!ASN1_GENERALIZEDTIME_check(thisupd)) {
+    OPENSSL_PUT_ERROR(OCSP, OCSP_R_ERROR_IN_THISUPDATE_FIELD);
+    ret = 0;
+  } else {
+    t_tmp = t_now + nsec;
+    if (X509_cmp_time_posix(thisupd, t_tmp) > 0) {
+      OPENSSL_PUT_ERROR(OCSP, OCSP_R_STATUS_NOT_YET_VALID);
+      ret = 0;
+    }
+
+    // If |maxsec| is specified, check that |thisUpdate| is not more than
+    // |maxsec| in the past.
+    if (maxsec >= 0) {
+      t_tmp = t_now - maxsec;
+      if (X509_cmp_time_posix(thisupd, t_tmp) < 0) {
+        OPENSSL_PUT_ERROR(OCSP, OCSP_R_STATUS_TOO_OLD);
+        ret = 0;
+      }
+    }
+  }
+
+  // If |nextUpdate| field is empty, we have validated everything we can at
+  // this point.
+  if (nextupd == NULL) {
+    return ret;
+  }
+
+  // Check |nextUpdate| is valid and not more than |nsec| in the past.
+  if (!ASN1_GENERALIZEDTIME_check(nextupd)) {
+    OPENSSL_PUT_ERROR(OCSP, OCSP_R_ERROR_IN_NEXTUPDATE_FIELD);
+    ret = 0;
+  } else {
+    t_tmp = t_now - nsec;
+    if (X509_cmp_time_posix(nextupd, t_tmp) < 0) {
+      OPENSSL_PUT_ERROR(OCSP, OCSP_R_STATUS_EXPIRED);
+      ret = 0;
+    }
+  }
+
+  // Also don't allow |nextUpdate| to precede |thisUpdate|.
+  if (ASN1_STRING_cmp(nextupd, thisupd) < 0) {
+    OPENSSL_PUT_ERROR(OCSP, OCSP_R_NEXTUPDATE_BEFORE_THISUPDATE);
+    ret = 0;
+  }
+
+  return ret;
 }
