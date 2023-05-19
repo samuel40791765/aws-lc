@@ -468,3 +468,80 @@ TEST(ECDSATest, SignTestVectors) {
     }
   });
 }
+
+
+TEST(EC, temp) {
+  // Assuming you have the r and s values of the ECDSA signature as hexadecimal strings
+    const char* r_hex = "000db4c31f316912295c5b9506aabc24b0b2dc2b2358e6b023148889d9200bcf44762e88575e359b4868b2d93ba7bdb24800b09fc22eade0744b9832b71ee784e9c";
+    const char* s_hex = "18c84437fac7cd82099a2a4230084ac27ec7ea9c92e1c9d9a71290df9b37dc881f9ba59ed331c22dca4b2cbb837cd916e0a78398d2b7aaf8e88f113a942beac48c0";
+
+    // Create BIGNUM objects for r and s values
+    BIGNUM *r = BN_new();
+    BIGNUM *s = BN_new();
+
+    // Convert hexadecimal strings to BIGNUMs
+    if (!BN_hex2bn(&r, r_hex)) {
+        printf("Error: Failed to convert r value to BIGNUM.\n");
+        BN_free(r);
+        BN_free(s);
+    }
+
+    if (!BN_hex2bn(&s, s_hex)) {
+        printf("Error: Failed to convert s value to BIGNUM.\n");
+        BN_free(r);
+        BN_free(s);
+    }
+
+    // Create an ECDSA_SIG object
+    ECDSA_SIG *ecdsa_sig = ECDSA_SIG_new();
+    if (!ecdsa_sig) {
+        printf("Error: Failed to create ECDSA signature object.\n");
+        BN_free(r);
+        BN_free(s);
+    }
+
+    // Set the r and s values of the ECDSA signature
+    if (!ECDSA_SIG_set0(ecdsa_sig, r, s)) {
+        printf("Error: Failed to set r and s values of ECDSA signature.\n");
+        BN_free(r);
+        BN_free(s);
+        ECDSA_SIG_free(ecdsa_sig);
+    }
+
+    // Determine the size of the signature in bytes
+    size_t sig_len = 200;
+    if (sig_len == 0) {
+        printf("Error: Failed to determine the size of the ECDSA signature.\n");
+        BN_free(r);
+        BN_free(s);
+        ECDSA_SIG_free(ecdsa_sig);
+    }
+
+    // Allocate memory for the signature bytes
+//    std::vector<uint8_t> sig_bytes(sig_len);
+//    sig_bytes = OPENSSL_malloc(sig_len);
+    uint8_t *sig_bytes = new uint8_t[sig_len];
+//    if (!sig_bytes) {
+//        printf("Error: Failed to allocate memory for ECDSA signature bytes.\n");
+//        BN_free(r);
+//        BN_free(s);
+//        ECDSA_SIG_free(ecdsa_sig);
+//    }
+
+    // Write the ECDSA signature to bytes
+    if (!ECDSA_SIG_to_bytes(&sig_bytes, &sig_len, ecdsa_sig)) {
+        printf("Error: Failed to write ECDSA signature to bytes.\n");
+        BN_free(r);
+        BN_free(s);
+        ECDSA_SIG_free(ecdsa_sig);
+//        free(sig_bytes);
+//        return 1;
+    }
+
+    // Print the signature bytes
+    printf("ECDSA Signature Bytes:\n");
+    for (size_t i = 0; i < sig_len; i++) {
+        printf("%02x", sig_bytes[i]);
+    }
+    printf("\n");
+}
