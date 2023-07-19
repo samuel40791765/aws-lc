@@ -5154,6 +5154,11 @@ OPENSSL_EXPORT const char *SSL_get_version(const SSL *ssl);
 // |SSL_get_ciphers| or NULL if out of range. Use |SSL_get_ciphers| instead.
 OPENSSL_EXPORT const char *SSL_get_cipher_list(const SSL *ssl, int n);
 
+OPENSSL_EXPORT int SSL_CTX_select_current_cert(SSL_CTX *ctx, X509 *x509);
+OPENSSL_EXPORT int SSL_select_current_cert(SSL *ssl, X509 *x509);
+
+
+
 // SSL_CTX_set_client_cert_cb sets a callback which is called on the client if
 // the server requests a client certificate and none is configured. On success,
 // the callback should return one and set |*out_x509| to |*out_pkey| to a leaf
@@ -5488,6 +5493,7 @@ OPENSSL_EXPORT uint16_t SSL_CIPHER_get_value(const SSL_CIPHER *cipher);
 #define SSL_CTRL_MODE doesnt_exist
 #define SSL_CTRL_NEED_TMP_RSA doesnt_exist
 #define SSL_CTRL_OPTIONS doesnt_exist
+#define SSL_CTRL_SELECT_CURRENT_CERT doesnt_exist
 #define SSL_CTRL_SESS_NUMBER doesnt_exist
 #define SSL_CTRL_SET_CURVES doesnt_exist
 #define SSL_CTRL_SET_CURVES_LIST doesnt_exist
@@ -5535,6 +5541,7 @@ OPENSSL_EXPORT uint16_t SSL_CIPHER_get_value(const SSL_CIPHER *cipher);
 #define SSL_CTX_get_tlsext_status_cb SSL_CTX_get_tlsext_status_cb
 #define SSL_CTX_get_tlsext_ticket_keys SSL_CTX_get_tlsext_ticket_keys
 #define SSL_CTX_need_tmp_RSA SSL_CTX_need_tmp_RSA
+#define SSL_CTX_select_current_cert SSL_CTX_select_current_cert
 #define SSL_CTX_sess_get_cache_size SSL_CTX_sess_get_cache_size
 #define SSL_CTX_sess_number SSL_CTX_sess_number
 #define SSL_CTX_sess_set_cache_size SSL_CTX_sess_set_cache_size
@@ -5571,6 +5578,7 @@ OPENSSL_EXPORT uint16_t SSL_CIPHER_get_value(const SSL_CIPHER *cipher);
   SSL_get_secure_renegotiation_support
 #define SSL_need_tmp_RSA SSL_need_tmp_RSA
 #define SSL_num_renegotiations SSL_num_renegotiations
+#define SSL_select_current_cert SSL_select_current_cert
 #define SSL_session_reused SSL_session_reused
 #define SSL_set0_chain SSL_set0_chain
 #define SSL_set1_chain SSL_set1_chain

@@ -238,6 +238,29 @@ void ssl_cert_clear_certs(CERT *cert) {
   cert->dc_key_method = nullptr;
 }
 
+static bool ssl_cert_select_current_cert(CERT *cert, X509 *x509) {
+  if (x509 == nullptr || ssl_cert_check_cert_private_keys_usage(cert)) {
+    return false;
+  }
+
+  // Compare pointer equivalence first.
+  for (size_t i = 0; i < cert->cert_private_keys.size(); i++) {
+    if (cert->cert_private_keys[i].x509_leaf == x509) {
+      cert->cert_private_key_idx = i;
+      return true;
+    }
+  }
+  // If no pointers are equal, dive into the X509 contents and compare.
+  for (size_t i = 0; i < cert->cert_private_keys.size(); i++) {
+    if (cert->cert_private_keys[i].x509_leaf &&
+        !X509_cmp(cert->cert_private_keys[i].x509_leaf, x509)) {
+      cert->cert_private_key_idx = i;
+      return true;
+    }
+  }
+  return true;
+}
+
 static void ssl_cert_set_cert_cb(CERT *cert, int (*cb)(SSL *ssl, void *arg),
                                  void *arg) {
   cert->cert_cb = cb;
@@ -1090,3 +1113,18 @@ int SSL_delegated_credential_used(const SSL *ssl) {
 }
 
 int SSL_CTX_get_security_level(const SSL_CTX *ctx) { return 3; }
+
+int SSL_CTX_select_current_cert(SSL_CTX *ctx, X509 *x509) {
+  if(!ssl_cert_select_current_cert(ctx->cert.get(), x509)) {
+    return 0;
+  }
+  return 1;
+}
+
+int SSL_select_current_cert(SSL *ssl, X509 *x509) {
+  if (!ssl->config &&
+      !ssl_cert_select_current_cert(ssl->config->cert.get(), x509)) {
+    return 0;
+  }
+  return 1;
+}
