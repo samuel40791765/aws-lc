@@ -2474,8 +2474,6 @@ struct CERT {
 
   Array<CERT_PKEY> cert_private_keys;
 
-  /// We'lll see what we want to do about the |x509_stash| below later.
-
   // x509_stash contains the last |X509| object append to the chain. This is a
   // workaround for some third-party code that continue to use an |X509| object
   // even after passing ownership with an “add0” function.
@@ -3668,7 +3666,7 @@ struct ssl_ctx_st {
   CRYPTO_EX_DATA ex_data;
 
   /// Handle and implement |extra_certs| later. These certs apply to all slots.
-  // STACK_OF(X509) *extra_certs;
+  bssl::UniquePtr<STACK_OF(CRYPTO_BUFFER)> extra_certs;
 
   // custom_*_extensions stores any callback sets for custom extensions. Note
   // that these pointers will be NULL if the stack would otherwise be empty.

@@ -477,16 +477,27 @@ static bool ssl_crypto_x509_ssl_auto_chain_if_needed(SSL_HANDSHAKE *hs) {
 
   // Only build a chain if there are no intermediates configured and the feature
   // isn't disabled.
-  UniquePtr<STACK_OF(CRYPTO_BUFFER)> &cert_chain =
+  STACK_OF(CRYPTO_BUFFER) *cert_chain =
       hs->config->cert->cert_private_keys[hs->config->cert->cert_private_key_idx]
-          .chain;
+          .chain.get();
+  /// We have to handle |extra_certs| logic here.
+  /// Maybe just check if cert_chain has a value, if not, we switch to extra_certs.
+  if(cert_chain == nullptr) {
+    cert_chain = hs->ssl->ctx->extra_certs.get();
+  }
+//    /* If we have a certificate specific chain use it, else use parent ctx. */
+//  if (cpk && cpk->chain) {
+//    extra_certs = cpk->chain;
+//  } else {
+//    extra_certs = s->ctx->extra_certs;
+//  }
   if ((hs->ssl->mode & SSL_MODE_NO_AUTO_CHAIN) || !ssl_has_certificate(hs) ||
-      cert_chain == nullptr || sk_CRYPTO_BUFFER_num(cert_chain.get()) > 1) {
+      cert_chain == nullptr || sk_CRYPTO_BUFFER_num(cert_chain) > 1) {
     return true;
   }
 
   UniquePtr<X509> leaf(
-      X509_parse_from_buffer(sk_CRYPTO_BUFFER_value(cert_chain.get(), 0)));
+      X509_parse_from_buffer(sk_CRYPTO_BUFFER_value(cert_chain, 0)));
   if (!leaf) {
     OPENSSL_PUT_ERROR(SSL, ERR_R_X509_LIB);
     return false;
@@ -929,6 +940,26 @@ static int ssl_cert_add1_chain_cert(CERT *cert, X509 *x509) {
   return 1;
 }
 
+static int ssl_cert_append_extra_certs(SSL_CTX *ctx, X509 *x509) {
+  UniquePtr<CRYPTO_BUFFER> buffer = x509_to_buffer(x509);
+  if (!buffer) {
+    return 0;
+  }
+
+  UniquePtr<STACK_OF(CRYPTO_BUFFER)> &extra_certs = ctx->extra_certs;
+  if (extra_certs != nullptr) {
+    return PushToStack(extra_certs.get(), std::move(buffer));
+  }
+
+  extra_certs = new_leafless_chain();
+  if (!extra_certs || !PushToStack(extra_certs.get(), std::move(buffer))) {
+    extra_certs.reset();
+    return 0;
+  }
+
+  return 1;
+}
+
 int SSL_CTX_set0_chain(SSL_CTX *ctx, STACK_OF(X509) *chain) {
   check_ssl_ctx_x509_method(ctx);
   return ssl_cert_set0_chain(ctx->cert.get(), chain);
@@ -967,7 +998,8 @@ int SSL_CTX_add1_chain_cert(SSL_CTX *ctx, X509 *x509) {
 
 int SSL_CTX_add_extra_chain_cert(SSL_CTX *ctx, X509 *x509) {
   check_ssl_ctx_x509_method(ctx);
-  return SSL_CTX_add0_chain_cert(ctx, x509);
+  return ssl_cert_append_extra_certs(ctx, x509);
+  // return SSL_CTX_add0_chain_cert(ctx, x509);
 }
 
 int SSL_add0_chain_cert(SSL *ssl, X509 *x509) {
@@ -993,7 +1025,8 @@ int SSL_CTX_clear_chain_certs(SSL_CTX *ctx) {
 
 int SSL_CTX_clear_extra_chain_certs(SSL_CTX *ctx) {
   check_ssl_ctx_x509_method(ctx);
-  return SSL_CTX_clear_chain_certs(ctx);
+  ctx->extra_certs.reset(nullptr);
+  return 1;
 }
 
 int SSL_clear_chain_certs(SSL *ssl) {
@@ -1051,6 +1084,22 @@ int SSL_CTX_get0_chain_certs(const SSL_CTX *ctx, STACK_OF(X509) **out_chain) {
 
 int SSL_CTX_get_extra_chain_certs(const SSL_CTX *ctx,
                                   STACK_OF(X509) **out_chain) {
+  if (ctx->extra_certs != nullptr) {
+    // We parse |extra_certs| back to |STACK_OF(X509)| on demand.
+    UniquePtr<STACK_OF(X509)> new_chain(sk_X509_new_null());
+    if (!new_chain) {
+      return 0;
+    }
+    for (size_t i = 0; i < sk_CRYPTO_BUFFER_num(ctx->extra_certs.get()); i++) {
+      CRYPTO_BUFFER *buffer = sk_CRYPTO_BUFFER_value(ctx->extra_certs.get(), i);
+      UniquePtr<X509> x509(X509_parse_from_buffer(buffer));
+      if (!x509 || !PushToStack(new_chain.get(), std::move(x509))) {
+        return 0;
+      }
+    }
+
+    *out_chain = new_chain.release();
+  }
   return SSL_CTX_get0_chain_certs(ctx, out_chain);
 }
 

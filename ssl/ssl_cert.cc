@@ -485,7 +485,7 @@ bool ssl_parse_cert_chain(uint8_t *out_alert,
 }
 
 /// Might need to handle the |extra_certs| logic here as well. This handles the
-/// chosen index right now, so it might be needed.
+/// chosen index right now, so it might not be needed.
 bool ssl_add_cert_chain(SSL_HANDSHAKE *hs, CBB *cbb) {
   if (!ssl_has_certificate(hs)) {
     return CBB_add_u24(cbb, 0);

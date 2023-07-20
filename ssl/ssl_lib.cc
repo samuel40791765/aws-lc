@@ -561,6 +561,10 @@ ssl_ctx_st::~ssl_ctx_st() {
   sk_SSL_CUSTOM_EXTENSION_pop_free(server_custom_extensions,
                                    SSL_CUSTOM_EXTENSION_free);
   x509_method->ssl_ctx_free(this);
+
+  /// Move below into x509_method->ssl_ctx_free
+  /// function name: ssl_crypto_x509_ssl_ctx_flush_extra_certs
+//  sk_X509_pop_free(this->extra_certs, X509_free);
 }
 
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *method) {

@@ -972,7 +972,12 @@ OPENSSL_EXPORT int SSL_CTX_add1_chain_cert(SSL_CTX *ctx, X509 *x509);
 // it returns one and takes ownership of |x509|. Otherwise, it returns zero.
 OPENSSL_EXPORT int SSL_add0_chain_cert(SSL *ssl, X509 *x509);
 
-// SSL_CTX_add_extra_chain_cert calls |SSL_CTX_add0_chain_cert|.
+// SSL_CTX_add_extra_chain_cert appends |x509| to the extra chain certificates
+// associated with |ctx|.
+//
+// |extra_certs| are only used for the auto-chaining feature, but this is
+// deprecated. The feature is off by default in AWS-LC.
+// See also |SSL_MODE_NO_AUTO_CHAIN|.
 OPENSSL_EXPORT int SSL_CTX_add_extra_chain_cert(SSL_CTX *ctx, X509 *x509);
 
 // SSL_add1_chain_cert appends |x509| to |ctx|'s certificate chain. It returns
@@ -984,7 +989,8 @@ OPENSSL_EXPORT int SSL_add1_chain_cert(SSL *ssl, X509 *x509);
 // one.
 OPENSSL_EXPORT int SSL_CTX_clear_chain_certs(SSL_CTX *ctx);
 
-// SSL_CTX_clear_extra_chain_certs calls |SSL_CTX_clear_chain_certs|.
+// SSL_CTX_clear_extra_chain_certs clears all extra chain certificates
+// associated with |ctx|.
 OPENSSL_EXPORT int SSL_CTX_clear_extra_chain_certs(SSL_CTX *ctx);
 
 // SSL_clear_chain_certs clears |ssl|'s certificate chain and returns one.
@@ -1085,7 +1091,8 @@ OPENSSL_EXPORT EVP_PKEY *SSL_get_privatekey(const SSL *ssl);
 OPENSSL_EXPORT int SSL_CTX_get0_chain_certs(const SSL_CTX *ctx,
                                             STACK_OF(X509) **out_chain);
 
-// SSL_CTX_get_extra_chain_certs calls |SSL_CTX_get0_chain_certs|.
+// SSL_CTX_get_extra_chain_certs retrieves the extra chain certificates
+// associated with |ctx|. If empty, it calls |SSL_CTX_get0_chain_certs|.
 OPENSSL_EXPORT int SSL_CTX_get_extra_chain_certs(const SSL_CTX *ctx,
                                                  STACK_OF(X509) **out_chain);
 
