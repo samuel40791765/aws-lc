@@ -812,7 +812,11 @@ bool ssl_on_certificate_selected(SSL_HANDSHAKE *hs) {
     return false;
   }
 
-  STACK_OF(CRYPTO_BUFFER) *chain =
+  return ssl_handshake_load_local_pubkey(hs);
+}
+
+bool ssl_handshake_load_local_pubkey(SSL_HANDSHAKE *hs) {
+    STACK_OF(CRYPTO_BUFFER) *chain =
       hs->config->cert
           ->cert_private_keys[hs->config->cert->cert_private_key_idx]
           .chain.get();
