@@ -5207,10 +5207,10 @@ TEST_P(MultipleCertificateSlotTest, CertificateSlotIndex) {
 
 TEST_P(MultipleCertificateSlotTest, AutomaticSelection) {
   uint16_t version = version_param().version;
-  if (version == TLS1_1_VERSION || version == TLS1_VERSION) {
-    // Automatic Multiple Certificate Selection is not supported for
-    // TLS1.0/1.1 yet.
-    // TODO: Add support if needed.
+  int slot_index = certificate_key_param().slot_index;
+  if ((version == TLS1_1_VERSION || version == TLS1_VERSION) &&
+      slot_index == SSL_PKEY_ED25519) {
+    // ED25519 is not supported in versions prior to TLS1.2.
     return;
   }
 

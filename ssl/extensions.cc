@@ -4094,6 +4094,11 @@ bool tls1_get_legacy_signature_algorithm(uint16_t *out, const EVP_PKEY *pkey) {
   }
 }
 
+static const uint16_t kLegacySignSignatureAlgorithms[] = {
+    SSL_SIGN_ECDSA_SHA1,
+    SSL_SIGN_RSA_PKCS1_MD5_SHA1
+};
+
 bool tls1_choose_signature_algorithm(SSL_HANDSHAKE *hs, uint16_t *out) {
   SSL *const ssl = hs->ssl;
   CERT *cert = hs->config->cert.get();
@@ -4102,11 +4107,18 @@ bool tls1_choose_signature_algorithm(SSL_HANDSHAKE *hs, uint16_t *out) {
   // Before TLS 1.2, the signature algorithm isn't negotiated as part of the
   // handshake.
   if (ssl_protocol_version(ssl) < TLS1_2_VERSION) {
-    if (!tls1_get_legacy_signature_algorithm(out, hs->local_pubkey.get())) {
-      OPENSSL_PUT_ERROR(SSL, SSL_R_NO_COMMON_SIGNATURE_ALGORITHMS);
-      return false;
+    for (uint16_t sigalg : kLegacySignSignatureAlgorithms) {
+      if (ssl_cert_private_keys_supports_signature_algorithm(hs, sigalg) &&
+          // We may have a private key that supports the signature algorithm,
+          // but we need to verify that the cipher allows it.
+          hs->new_cipher->algorithm_auth &
+              ssl_cipher_auth_mask_for_key(hs->local_pubkey.get())) {
+        *out = sigalg;
+        return true;
+      }
     }
-    return true;
+    OPENSSL_PUT_ERROR(SSL, SSL_R_NO_COMMON_SIGNATURE_ALGORITHMS);
+    return false;
   }
 
   Span<const uint16_t> sigalgs = kSignSignatureAlgorithms;
