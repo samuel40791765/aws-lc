@@ -131,6 +131,7 @@ const (
 
 const (
 	rsaCertificateFile       = "cert.pem"
+	testCertificateFile      = "certificate.pem"
 	rsa1024CertificateFile   = "rsa_1024_cert.pem"
 	rsaChainCertificateFile  = "rsa_chain_cert.pem"
 	ecdsaP224CertificateFile = "ecdsa_p224_cert.pem"
@@ -142,6 +143,7 @@ const (
 
 const (
 	rsaKeyFile       = "key.pem"
+	testKeyFile      = "privatekey.pem"
 	rsa1024KeyFile   = "rsa_1024_key.pem"
 	rsaChainKeyFile  = "rsa_chain_key.pem"
 	ecdsaP224KeyFile = "ecdsa_p224_key.pem"
@@ -10711,6 +10713,20 @@ func addSignatureAlgorithmTests() {
 		flags: []string{
 			"-cert-file", path.Join(*resourceDir, rsa1024CertificateFile),
 			"-key-file", path.Join(*resourceDir, rsa1024KeyFile),
+		},
+		shouldFail:    true,
+		expectedError: ":NO_COMMON_SIGNATURE_ALGORITHMS:",
+	})
+
+	testCases = append(testCases, testCase{	
+		testType: serverTest,
+		name:     "RSA-PSS-Test",
+		config: Config{
+			MaxVersion: VersionTLS12,
+		},
+		flags: []string{
+			"-cert-file", path.Join(*resourceDir, testCertificateFile),
+			"-key-file", path.Join(*resourceDir, testKeyFile),
 		},
 		shouldFail:    true,
 		expectedError: ":NO_COMMON_SIGNATURE_ALGORITHMS:",
