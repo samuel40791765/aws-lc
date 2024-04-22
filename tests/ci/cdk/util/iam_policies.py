@@ -47,14 +47,15 @@ def ssm_policies_in_json():
             {
                 "Effect": "Allow",
                 "Action": [
-                    "ssm:SendCommand",
+                    "ssm:StartSession",
                     "ssm:CreateDocument",
                     "ssm:DeleteDocument",
                     "ssm:ListCommands",
                     "ssm:DescribeInstanceInformation"
                 ],
                 "Resource": [
-                    "arn:aws:ec2:{}:{}:instance/*".format(AWS_REGION, AWS_ACCOUNT), # Needed for ssm:SendCommand
+                    "arn:aws:ec2:{}:{}:instance/*".format(AWS_REGION, AWS_ACCOUNT), # Needed for ssm:StartSession
+                    "arn:aws:ssm:{}::document/AWS-StartInteractiveCommand".format(AWS_REGION), # Needed for ssm:StartSession
                     "arn:aws:ssm:{}:{}:*".format(AWS_REGION, AWS_ACCOUNT),
                     "arn:aws:ssm:{}:{}:document/*".format(AWS_REGION, AWS_ACCOUNT),
                 ]

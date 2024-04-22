@@ -16,6 +16,13 @@ cleanup() {
   aws ssm delete-document --name "${ssm_doc_name}"
 }
 
+install_ssm_plugin() {
+  apt-get update
+  apt-get install curl expect -y
+  curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
+  dpkg -i session-manager-plugin.deb
+}
+
 generate_ssm_document_file() {
   # use sed to replace placeholder values inside preexisting document
   sed -e "s,{AWS_ACCOUNT_ID},${AWS_ACCOUNT_ID},g" \
@@ -53,7 +60,8 @@ export ecr_docker_tag="$3"
 export s3_bucket_name="aws-lc-codebuild"
 
 # create the ssm documents that will be used for the various ssm commands
-generate_ssm_document_file
+install_ssm_plugin
+# generate_ssm_document_file
 
 # create ec2 instances
 instance_id=$(create_ec2_instances "${ec2_ami_id}" "${ec2_instance_type}")
@@ -77,56 +85,63 @@ for i in {1..30}; do
 done
 
 # Wait 5 minutes for instance to "warm up"?
-echo "Instances need to initialize a few minutes before SSM commands can be properly run"
-sleep 300
+# echo "Instances need to initialize a few minutes before SSM commands can be properly run"
+# sleep 300
+
+unbuffer aws ssm start-session --target "${instance_id}" --document-name AWS-StartInteractiveCommand --parameters \
+                      command="sudo -i && git clone ${CODEBUILD_SOURCE_REPO_URL} aws-lc-pr && \
+                              cd aws-lc-pr && \
+                              git fetch origin pull/${CODEBUILD_WEBHOOK_TRIGGER//pr\/}/head:temp && \
+                              git checkout temp && \
+                              ./tests/ci/run_fips_tests.sh";
 
 # Create, and run ssm command.
-ssm_doc_name=$(create_ssm_document "${ec2_ami_id}")
+# ssm_doc_name=$(create_ssm_document "${ec2_ami_id}")
 
-cloudwatch_group_name="aws-lc-ci-ec2-test-framework-cw-logs"
-ec2_test_ssm_command_id=$(run_ssm_command "${ssm_doc_name}" "${instance_id}" ${cloudwatch_group_name})
+# cloudwatch_group_name="aws-lc-ci-ec2-test-framework-cw-logs"
+# ec2_test_ssm_command_id=$(run_ssm_command "${ssm_doc_name}" "${instance_id}" ${cloudwatch_group_name})
 
-run_url="https://${AWS_REGION}.console.aws.amazon.com/cloudwatch/home?region=${AWS_REGION}\
-#logsV2:log-groups/log-group/${cloudwatch_group_name}/log-events/\
-${ec2_test_ssm_command_id}\$252F${instance_id}\$252FrunShellScript\$252Fstdout"
+# run_url="https://${AWS_REGION}.console.aws.amazon.com/cloudwatch/home?region=${AWS_REGION}\
+# #logsV2:log-groups/log-group/${cloudwatch_group_name}/log-events/\
+# ${ec2_test_ssm_command_id}\$252F${instance_id}\$252FrunShellScript\$252Fstdout"
 
-echo "Actual Run in EC2 can be observered at CloudWatch URL: ${run_url}"
+# echo "Actual Run in EC2 can be observered at CloudWatch URL: ${run_url}"
 
-# Give some time for the commands to run
-done=false
-success=false
-for i in {1..45}; do
-  echo "${i}: Continue to wait 2 min for SSM commands to finish."
-  sleep 120
+# # Give some time for the commands to run
+# done=false
+# success=false
+# for i in {1..45}; do
+#   echo "${i}: Continue to wait 2 min for SSM commands to finish."
+#   sleep 120
 
-  ssm_command_status="$(aws ssm list-commands --command-id "${ec2_test_ssm_command_id}" --query Commands[*].Status --output text)"
-  ssm_target_count="$(aws ssm list-commands --command-id "${ec2_test_ssm_command_id}" --query Commands[*].TargetCount --output text)"
-  ssm_completed_count="$(aws ssm list-commands --command-id "${ec2_test_ssm_command_id}" --query Commands[*].CompletedCount --output text)"
-  if [[ ${ssm_command_status} == 'Success' && ${ssm_completed_count} == "${ssm_target_count}" ]]; then
-    echo "SSM command ${ec2_test_ssm_command_id} finished successfully."
-    success=true
-    done=true
-  elif [[ ${ssm_command_status} == 'Failed' && ${ssm_completed_count} == "${ssm_target_count}" ]]; then
-    echo "SSM command ${ec2_test_ssm_command_id} failed."
-    done=true
-  else
-    # Still running.
-    done=false
-  fi
+#   ssm_command_status="$(aws ssm list-commands --command-id "${ec2_test_ssm_command_id}" --query Commands[*].Status --output text)"
+#   ssm_target_count="$(aws ssm list-commands --command-id "${ec2_test_ssm_command_id}" --query Commands[*].TargetCount --output text)"
+#   ssm_completed_count="$(aws ssm list-commands --command-id "${ec2_test_ssm_command_id}" --query Commands[*].CompletedCount --output text)"
+#   if [[ ${ssm_command_status} == 'Success' && ${ssm_completed_count} == "${ssm_target_count}" ]]; then
+#     echo "SSM command ${ec2_test_ssm_command_id} finished successfully."
+#     success=true
+#     done=true
+#   elif [[ ${ssm_command_status} == 'Failed' && ${ssm_completed_count} == "${ssm_target_count}" ]]; then
+#     echo "SSM command ${ec2_test_ssm_command_id} failed."
+#     done=true
+#   else
+#     # Still running.
+#     done=false
+#   fi
 
-  # if after the loop finish and done is still true, then we're done
-  if [ "${done}" = true ]; then
-    echo "EC2 SSM command has finished."
+#   # if after the loop finish and done is still true, then we're done
+#   if [ "${done}" = true ]; then
+#     echo "EC2 SSM command has finished."
 
-    # if success is still true here, then none of the commands failed
-    if [ "${success}" == true ]; then
-      echo "EC2 SSM command succeeded!"
-      exit 0
-    else
-      echo "EC2 SSM command failed!"
-      exit 1
-    fi
-    break
-  fi
-done
+#     # if success is still true here, then none of the commands failed
+#     if [ "${success}" == true ]; then
+#       echo "EC2 SSM command succeeded!"
+#       exit 0
+#     else
+#       echo "EC2 SSM command failed!"
+#       exit 1
+#     fi
+#     break
+#   fi
+# done
 exit 1
