@@ -649,6 +649,10 @@ struct ec_group_st {
   // otherwise.
   int field_greater_than_order;
 
+  // conv_form represents the encoding format of the elliptic curve point.
+  // TheDefault is |POINT_CONVERSION_UNCOMPRESSED|.
+  point_conversion_form_t conv_form;
+
   CRYPTO_refcount_t references;
 } /* EC_GROUP */;
 

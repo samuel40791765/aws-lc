@@ -144,6 +144,7 @@ DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p224) {
   ec_group_set_a_minus3(out);
   out->has_order = 1;
   out->field_greater_than_order = 1;
+  out->conv_form = POINT_CONVERSION_UNCOMPRESSED;
 }
 
 DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p256) {
@@ -176,6 +177,7 @@ DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p256) {
   ec_group_set_a_minus3(out);
   out->has_order = 1;
   out->field_greater_than_order = 1;
+  out->conv_form = POINT_CONVERSION_UNCOMPRESSED;
 }
 
 DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p384) {
@@ -206,6 +208,7 @@ DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p384) {
   ec_group_set_a_minus3(out);
   out->has_order = 1;
   out->field_greater_than_order = 1;
+  out->conv_form = POINT_CONVERSION_UNCOMPRESSED;
 }
 
 DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p521) {
@@ -240,6 +243,7 @@ DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p521) {
   ec_group_set_a_minus3(out);
   out->has_order = 1;
   out->field_greater_than_order = 1;
+  out->conv_form = POINT_CONVERSION_UNCOMPRESSED;
 }
 
 DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_secp256k1) {
@@ -266,6 +270,7 @@ DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_secp256k1) {
   ec_group_set_a_zero(out);
   out->has_order = 1;
   out->field_greater_than_order = 1;
+  out->conv_form = POINT_CONVERSION_UNCOMPRESSED;
 }
 
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
@@ -1092,4 +1097,10 @@ void EC_GROUP_set_point_conversion_form(EC_GROUP *group,
       form != POINT_CONVERSION_COMPRESSED) {
     abort();
   }
+  group->conv_form = form;
+}
+
+point_conversion_form_t EC_GROUP_get_point_conversion_form(const EC_GROUP
+                                                           *group) {
+  return group->conv_form;
 }
