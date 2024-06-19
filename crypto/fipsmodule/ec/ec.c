@@ -304,7 +304,8 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
   if (ret == NULL) {
     return NULL;
   }
-  ret->references = 1;
+//  ret->references = 1;
+  ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
   ret->meth = EC_GFp_mont_method();
   bn_mont_ctx_init(&ret->field);
   bn_mont_ctx_init(&ret->order);
@@ -380,16 +381,27 @@ err:
 
 EC_GROUP *EC_GROUP_new_by_curve_name(int nid) {
   switch (nid) {
-    case NID_secp224r1:
-      return (EC_GROUP *)EC_group_p224();
-    case NID_X9_62_prime256v1:
-      return (EC_GROUP *)EC_group_p256();
-    case NID_secp384r1:
-      return (EC_GROUP *)EC_group_p384();
-    case NID_secp521r1:
-      return (EC_GROUP *)EC_group_p521();
-    case NID_secp256k1:
-	  return (EC_GROUP *)EC_group_secp256k1();
+//    case NID_secp224r1:
+//      return (EC_GROUP *)EC_group_p224();
+//    case NID_X9_62_prime256v1:
+//      return (EC_GROUP *)EC_group_p256();
+//    case NID_secp384r1:
+//      return (EC_GROUP *)EC_group_p384();
+//    case NID_secp521r1:
+//      return (EC_GROUP *)EC_group_p521();
+//    case NID_secp256k1:
+//      return (EC_GROUP *)EC_group_secp256k1();
+          case NID_secp224r1:
+            return (EC_GROUP *)OPENSSL_memdup(EC_group_p224(), sizeof(EC_GROUP));
+          case NID_X9_62_prime256v1:
+            return (EC_GROUP *)OPENSSL_memdup(EC_group_p256(), sizeof(EC_GROUP));
+          case NID_secp384r1:
+            return (EC_GROUP *)OPENSSL_memdup(EC_group_p384(), sizeof(EC_GROUP));
+          case NID_secp521r1:
+            return (EC_GROUP *)OPENSSL_memdup(EC_group_p521(), sizeof(EC_GROUP));
+          case NID_secp256k1:
+            return (EC_GROUP *)OPENSSL_memdup(EC_group_secp256k1(),
+                                              sizeof(EC_GROUP));
     default:
       OPENSSL_PUT_ERROR(EC, EC_R_UNKNOWN_GROUP);
       return NULL;
@@ -397,10 +409,13 @@ EC_GROUP *EC_GROUP_new_by_curve_name(int nid) {
 }
 
 void EC_GROUP_free(EC_GROUP *group) {
-  if (group == NULL ||
-      // Built-in curves are static.
-      group->curve_name != NID_undef ||
-      !CRYPTO_refcount_dec_and_test_zero(&group->references)) {
+//  if (group == NULL ||
+//      // Built-in curves are static.
+//      group->curve_name != NID_undef ||
+//      !CRYPTO_refcount_dec_and_test_zero(&group->references)) {
+//    return;
+//  }
+  if (group == NULL) {
     return;
   }
 
@@ -410,16 +425,21 @@ void EC_GROUP_free(EC_GROUP *group) {
 }
 
 EC_GROUP *EC_GROUP_dup(const EC_GROUP *a) {
-  if (a == NULL ||
-      // Built-in curves are static.
-      a->curve_name != NID_undef) {
-    return (EC_GROUP *)a;
-  }
+//  if (a == NULL ||
+//      // Built-in curves are static.
+//      a->curve_name != NID_undef) {
+//    return (EC_GROUP *)a;
+//  }
 
+  EC_GROUP *group = EC_GROUP_new_by_curve_name(a->curve_name);
+  if(group == NULL) {
+    return NULL;
+  }
+  group->conv_form = a->conv_form;
   // Groups are logically immutable (but for |EC_GROUP_set_generator| which must
   // be called early on), so we simply take a reference.
-  EC_GROUP *group = (EC_GROUP *)a;
-  CRYPTO_refcount_inc(&group->references);
+//  EC_GROUP *group = (EC_GROUP *)a;
+//  CRYPTO_refcount_inc(&group->references);
   return group;
 }
 
