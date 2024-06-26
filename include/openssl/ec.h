@@ -137,6 +137,10 @@ OPENSSL_EXPORT const EC_GROUP *EC_group_secp256k1(void);
 // more modern primitives.
 OPENSSL_EXPORT EC_GROUP *EC_GROUP_new_by_curve_name(int nid);
 
+// EC_GROUP_new_by_curve_name_openssl returns a dynamically allocated
+// |EC_GROUP| for OpenSSL compatibility.
+OPENSSL_EXPORT EC_GROUP *EC_GROUP_new_by_curve_name_openssl(int nid);
+
 // EC_GROUP_free releases a reference to |group|.
 OPENSSL_EXPORT void EC_GROUP_free(EC_GROUP *group);
 
@@ -446,8 +450,8 @@ OPENSSL_EXPORT OPENSSL_DEPRECATED int EC_GROUP_get_asn1_flag(
 
 // EC_GROUP_set_point_conversion_form aborts the process if |form| is not
 // |POINT_CONVERSION_UNCOMPRESSED| or |POINT_CONVERSION_COMPRESSED|, and
-// otherwise does nothing. This DOES NOT change the encoding format for
-// |EC_GROUP|.
+// otherwise does nothing. The encoding format for |EC_GROUP| is only changed
+// if |group| was allocated by |EC_GROUP_new_by_curve_name_openssl|.
 //
 // Note: Use |EC_KEY_set_conv_form| / |EC_KEY_get_conv_form| to set and return
 // the  desired compression format.

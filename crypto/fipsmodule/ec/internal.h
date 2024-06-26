@@ -617,6 +617,12 @@ struct ec_point_st {
   EC_JACOBIAN raw;
 } /* EC_POINT */;
 
+
+typedef enum {
+  EC_GROUP_STATIC = 1,
+  EC_GROUP_DYNAMIC = 2,
+} ec_group_allocation_method;
+
 struct ec_group_st {
   const EC_METHOD *meth;
 
@@ -653,7 +659,11 @@ struct ec_group_st {
   // TheDefault is |POINT_CONVERSION_UNCOMPRESSED|.
   point_conversion_form_t conv_form;
 
-  CRYPTO_refcount_t references;
+  // allocation_method indicates the allocation method of the |EC_GROUP|.
+  // The default is |EC_GROUP_STATIC| to use our built-in static curves.
+  ec_group_allocation_method allocation_method;
+
+//  CRYPTO_refcount_t references;
 } /* EC_GROUP */;
 
 EC_GROUP *ec_group_new(const EC_METHOD *meth, const BIGNUM *p, const BIGNUM *a,
