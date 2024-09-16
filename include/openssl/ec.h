@@ -464,21 +464,7 @@ OPENSSL_EXPORT size_t EC_get_builtin_curves(EC_builtin_curve *out_curves,
 OPENSSL_EXPORT void EC_POINT_clear_free(EC_POINT *point);
 
 
-// |EC_GROUP| No-op Functions [Deprecated].
-
-// EC_GROUP_set_asn1_flag does nothing.
-OPENSSL_EXPORT OPENSSL_DEPRECATED void EC_GROUP_set_asn1_flag(EC_GROUP *group,
-                                                              int flag);
-
-// EC_GROUP_get_asn1_flag returns |OPENSSL_EC_NAMED_CURVE|.
-OPENSSL_EXPORT OPENSSL_DEPRECATED int EC_GROUP_get_asn1_flag(
-    const EC_GROUP *group);
-
-// EC_GROUP_set_point_conversion_form aborts the process if |form| is not
-// |POINT_CONVERSION_UNCOMPRESSED| or |POINT_CONVERSION_COMPRESSED|, and
-// otherwise does nothing.
-OPENSSL_EXPORT OPENSSL_DEPRECATED void EC_GROUP_set_point_conversion_form(
-    EC_GROUP *group, point_conversion_form_t form);
+// General No-op Functions [Deprecated].
 
 // EC_GROUP_set_seed does nothing and returns 0.
 //
@@ -500,6 +486,42 @@ EC_GROUP_get_seed_len(const EC_GROUP *group);
 // ECPKParameters_print prints nothing and returns 1.
 OPENSSL_EXPORT OPENSSL_DEPRECATED int ECPKParameters_print(
     BIO *bio, const EC_GROUP *group, int offset);
+
+
+// |EC_GROUP| No-op Functions [Deprecated].
+//
+// Unlike OpenSSL's |EC_GROUP| implementation, our |EC_GROUP|s for named
+// curves are static and immutable. The following functions pertain to
+// the mutable aspects of OpenSSL's |EC_GROUP| structure. Using these
+// functions undermines the assumption that our curves are static. Consider
+// using the listed alternatives.
+
+// EC_GROUP_set_asn1_flag does nothing.
+OPENSSL_EXPORT OPENSSL_DEPRECATED void EC_GROUP_set_asn1_flag(EC_GROUP *group,
+                                                              int flag);
+
+// EC_GROUP_get_asn1_flag returns |OPENSSL_EC_NAMED_CURVE|.
+OPENSSL_EXPORT OPENSSL_DEPRECATED int EC_GROUP_get_asn1_flag(
+    const EC_GROUP *group);
+
+// EC_GROUP_set_point_conversion_form aborts the process if |form| is not
+// |POINT_CONVERSION_UNCOMPRESSED| or |POINT_CONVERSION_COMPRESSED|, and
+// otherwise does nothing. This DOES NOT change the encoding format for
+// |EC_GROUP|.
+//
+// Note: Use |EC_KEY_set_conv_form| / |EC_KEY_get_conv_form| to set and return
+// the  desired compression format.
+OPENSSL_EXPORT OPENSSL_DEPRECATED void EC_GROUP_set_point_conversion_form(
+    EC_GROUP *group, point_conversion_form_t form);
+
+// EC_GROUP_get_point_conversion_form returns |POINT_CONVERSION_UNCOMPRESSED|
+// (the default compression format).
+//
+// Note: Use |EC_KEY_set_conv_form| / |EC_KEY_get_conv_form| to set and return
+// the  desired compression format.
+OPENSSL_EXPORT OPENSSL_DEPRECATED point_conversion_form_t
+EC_GROUP_get_point_conversion_form(const EC_GROUP *group);
+
 
 // EC_METHOD No-ops [Deprecated].
 //

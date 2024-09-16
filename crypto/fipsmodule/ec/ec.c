@@ -144,6 +144,8 @@ DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p224) {
   ec_group_set_a_minus3(out);
   out->has_order = 1;
   out->field_greater_than_order = 1;
+  out->conv_form = POINT_CONVERSION_UNCOMPRESSED;
+  out->allocation_method = EC_GROUP_STATIC;
 }
 
 DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p256) {
@@ -176,6 +178,8 @@ DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p256) {
   ec_group_set_a_minus3(out);
   out->has_order = 1;
   out->field_greater_than_order = 1;
+  out->conv_form = POINT_CONVERSION_UNCOMPRESSED;
+  out->allocation_method = EC_GROUP_STATIC;
 }
 
 DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p384) {
@@ -206,6 +210,8 @@ DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p384) {
   ec_group_set_a_minus3(out);
   out->has_order = 1;
   out->field_greater_than_order = 1;
+  out->conv_form = POINT_CONVERSION_UNCOMPRESSED;
+  out->allocation_method = EC_GROUP_STATIC;
 }
 
 DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p521) {
@@ -240,6 +246,8 @@ DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_p521) {
   ec_group_set_a_minus3(out);
   out->has_order = 1;
   out->field_greater_than_order = 1;
+  out->conv_form = POINT_CONVERSION_UNCOMPRESSED;
+  out->allocation_method = EC_GROUP_STATIC;
 }
 
 DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_secp256k1) {
@@ -266,6 +274,8 @@ DEFINE_METHOD_FUNCTION(EC_GROUP, EC_group_secp256k1) {
   ec_group_set_a_zero(out);
   out->has_order = 1;
   out->field_greater_than_order = 1;
+  out->conv_form = POINT_CONVERSION_UNCOMPRESSED;
+  out->allocation_method = EC_GROUP_STATIC;
 }
 
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
@@ -299,7 +309,8 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
   if (ret == NULL) {
     return NULL;
   }
-  ret->references = 1;
+//  ret->references = 1;
+  ret->allocation_method = EC_GROUP_DYNAMIC;
   ret->meth = EC_GFp_mont_method();
   bn_mont_ctx_init(&ret->field);
   bn_mont_ctx_init(&ret->order);
@@ -391,11 +402,37 @@ EC_GROUP *EC_GROUP_new_by_curve_name(int nid) {
   }
 }
 
+EC_GROUP *EC_GROUP_new_by_curve_name_openssl(int nid) {
+  EC_GROUP *ret = NULL;
+  switch (nid) {
+    case NID_secp224r1:
+      ret = (EC_GROUP *)OPENSSL_memdup(EC_group_p224(), sizeof(EC_GROUP));
+      break;
+    case NID_X9_62_prime256v1:
+      ret = (EC_GROUP *)OPENSSL_memdup(EC_group_p256(), sizeof(EC_GROUP));
+      break;
+    case NID_secp384r1:
+      ret = (EC_GROUP *)OPENSSL_memdup(EC_group_p384(), sizeof(EC_GROUP));
+      break;
+    case NID_secp521r1:
+      ret = (EC_GROUP *)OPENSSL_memdup(EC_group_p521(), sizeof(EC_GROUP));
+      break;
+    case NID_secp256k1:
+      ret = (EC_GROUP *)OPENSSL_memdup(EC_group_secp256k1(), sizeof(EC_GROUP));
+      break;
+    default:
+      OPENSSL_PUT_ERROR(EC, EC_R_UNKNOWN_GROUP);
+      return NULL;
+  }
+  ret->allocation_method = EC_GROUP_DYNAMIC;
+  return ret;
+}
+
 void EC_GROUP_free(EC_GROUP *group) {
   if (group == NULL ||
       // Built-in curves are static.
       group->curve_name != NID_undef ||
-      !CRYPTO_refcount_dec_and_test_zero(&group->references)) {
+      group->allocation_method == EC_GROUP_STATIC) {
     return;
   }
 
@@ -407,15 +444,45 @@ void EC_GROUP_free(EC_GROUP *group) {
 EC_GROUP *EC_GROUP_dup(const EC_GROUP *a) {
   if (a == NULL ||
       // Built-in curves are static.
-      a->curve_name != NID_undef) {
+      a->curve_name != NID_undef ||
+      a->allocation_method == EC_GROUP_STATIC) {
     return (EC_GROUP *)a;
   }
 
   // Groups are logically immutable (but for |EC_GROUP_set_generator| which must
   // be called early on), so we simply take a reference.
-  EC_GROUP *group = (EC_GROUP *)a;
-  CRYPTO_refcount_inc(&group->references);
-  return group;
+//  EC_GROUP *group = (EC_GROUP *)a;
+//  CRYPTO_refcount_inc(&group->references);
+
+  // Still more to figure out here.
+  EC_GROUP *ret = OPENSSL_zalloc(sizeof(EC_GROUP));
+  if (ret == NULL) {
+    return NULL;
+  }
+  ret->has_order = a->has_order;
+  ret->a_is_minus3 = a->a_is_minus3;
+  ret->curve_name = a->curve_name;
+  ret->conv_form = a->conv_form;
+  ret->field_greater_than_order = a->field_greater_than_order;
+
+  ret->generator.group = ret;
+  OPENSSL_memcpy(ret->generator.raw.X.words, a->generator.raw.X.words, sizeof(EC_FELEM));
+  OPENSSL_memcpy(ret->generator.raw.Y.words, a->generator.raw.Y.words, sizeof(EC_FELEM));
+  OPENSSL_memcpy(ret->generator.raw.Z.words, a->generator.raw.Z.words, sizeof(EC_FELEM));
+  OPENSSL_memcpy(ret->a.words, a->a.words, sizeof(EC_FELEM));
+  OPENSSL_memcpy(ret->b.words, a->b.words, sizeof(EC_FELEM));
+
+
+  ret->allocation_method = a->allocation_method;
+  ret->meth = a->meth;
+  bn_mont_ctx_init(&ret->field);
+  bn_mont_ctx_init(&ret->order);
+  if (!BN_MONT_CTX_copy(&ret->field, &a->field) ||
+      !BN_MONT_CTX_copy(&ret->order, &a->order)) {
+    EC_GROUP_free(ret);
+    ret = NULL;
+  }
+  return ret;
 }
 
 int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ignored) {
@@ -1095,6 +1162,15 @@ void EC_GROUP_set_point_conversion_form(EC_GROUP *group,
       form != POINT_CONVERSION_COMPRESSED) {
     abort();
   }
+  // Only dynamically allocated groups are mutable.
+  if(group->allocation_method == EC_GROUP_DYNAMIC) {
+    group->conv_form = form;
+  }
+}
+
+point_conversion_form_t EC_GROUP_get_point_conversion_form(const EC_GROUP
+                                                           *group) {
+  return group->conv_form;
 }
 
 size_t EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *seed,
