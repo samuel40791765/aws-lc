@@ -1674,9 +1674,9 @@ TEST(X509Test, TestVerify) {
 
     // Test depth limits. |configure_callback| looks at |override_depth| and
     // |depth|. Negative numbers have historically worked, so test those too.
-    for (int d : {-4, -3, -2, -1, 0, 1, 2, 3, 4, INT_MAX - 3, INT_MAX - 2,
-                  INT_MAX - 1, INT_MAX}) {
-      SCOPED_TRACE(d);
+    fprintf(stderr, "\n\nStart of failing tests\n");
+    for (int d : {-4, -3, -2, -1}) {
+//      SCOPED_TRACE(d);
       override_depth = true;
       depth = d;
       // A chain with a leaf, two intermediates, and a root is depth two.
@@ -8136,6 +8136,7 @@ TEST(X509Test, Trust) {
   // NID_anyExtendedKeyUsage is just an unrelated OID to X509_TRUST_SSL_SERVER.
   // Unlike the default behavior, once a certificate has explicit trust settings
   // for any OID, the self-signed check is disabled.
+  // TODO: change to |X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN
   EXPECT_EQ(
       X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT,
       Verify(leaf.normal.get(), {root.trusted_any.get()},

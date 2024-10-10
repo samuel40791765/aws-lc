@@ -347,7 +347,7 @@ struct x509_store_ctx_st {
 
   // The following is built up
 
-  int last_untrusted;     // index of last untrusted cert
+  int num_untrusted;     // number of untrusted certs
   STACK_OF(X509) *chain;  // chain of X509s - built up and trusted
 
   // When something goes wrong, this is why
