@@ -1701,6 +1701,109 @@ TEST(X509Test, TestVerify) {
   }
 }
 
+static const char kInvalidRootCAPEM[] = R"(
+-----BEGIN CERTIFICATE-----
+MIIDGDCCAgCgAwIBAgIUTa2qQc3EbBW9ecSm8iA7HKCIk1gwDQYJKoZIhvcNAQEL
+BQAwHDELMAkGA1UEBhMCVVMxDTALBgNVBAMMBHJvb3QwIBcNMjQwOTMwMTU0MzQy
+WhgPMjIwNDAzMDcxNTQzNDJaMBwxCzAJBgNVBAYTAlVTMQ0wCwYDVQQDDARyb290
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqii4EjIZTlFXAbNLJLS4
+yHkBFqphFwy0yQiNASe89YQTnD56XK5RQdi84C8tIWP7a/21flfoMJiwHNCIOzlo
+UIymCSZrDtYVCPY9W9cLr8zYILp7styE3mXYalLzccNe5UnIA8rMPG2GaIogI0c2
+sB/avGPrkUQJPJ4y7EQVu+4ZzuoRL/Gi/AR5ON6as4xAPiauwIBmv4uhDQ0EiC23
+2DLkqnzqt8GMib/WQwpAB3/YYEQkpXEbW+O4SZHR8xip2STMOzzac/JZsgd3tFKN
+ATxN+360j4rVoiZI2x+zT8FaSRn4muNfXPBM9iNY4zRbyHZBbrshvMeEbK4cabcP
+RQIDAQABo1AwTjAdBgNVHQ4EFgQUE00/8JZXdJamLsQSpRZdV8TkYZ8wHwYDVR0j
+BBgwFoAUE00/8JZXdJamLsQSpRZdV8TkYZ8wDAYDVR0TAQH/BAIwADANBgkqhkiG
+9w0BAQsFAAOCAQEAG7sq3+NmIrjXMSam9x7YErIxFfBtjkxIAAgfE0ygx0jHasSM
+6i7u4WCxbYs7uvbVSe50IObNFNetaVNDgfUw9uRrdOrzo3aXPm/oh/xxP9Ln8mr0
+eP1Q1bXaH0My9Cy2t4hZpVpY1PfbW0e64B0F174PkhU5OmyG2i45/IpBV97/BNtN
+bkpiPOgEAqwo2i0YJQH7WWHZ4xmmMGsTOyDTGkY9lAa9QNot1QcJyiq48hGuccAo
+VUsT93Ikb2Hz2h9wlr4v+8DQrnscOqFee6UNgwZQZdW0elRUtmgKUnGBPYb8V2g2
++mUgpGfSrcvkT79do6eriNAQTh4oZQwWwwEEjw==
+-----END CERTIFICATE-----
+)";
+
+static const char kInvalidIntermediatePEM[] = R"(
+-----BEGIN CERTIFICATE-----
+MIIDIzCCAgugAwIBAgIURHw0BU1gsflSgBDxwAC/IdDADiwwDQYJKoZIhvcNAQEL
+BQAwHDELMAkGA1UEBhMCVVMxDTALBgNVBAMMBHJvb3QwIBcNMjQwOTMwMTU0MzQz
+WhgPMjIwNDAzMDcxNTQzNDNaMCQxCzAJBgNVBAYTAlVTMRUwEwYDVQQDDAxpbnRl
+cm1lZGlhdGUwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDHi5e8W1Yb
+AXuyKp8Fsqh1JJAPJFqZLF7lvv0n4uyVMuBh0F/6mK0jDcMCJCBt0d+qNYEEmZSq
+Wrg6oikTQ/l3PCjtDQ24TvtbCs9sZS4Iw2NGSVAleYQ9fEDgTSlWv2ICiFtrAs5k
+ZAkhjAQJoyrKxHBuaS3QK00+JjJ0wOM74IJJNq4g6QeijHHitsq6ZV5mwp/Up+yg
+ErsWgmcaFG+saQYv74qD5a6qxVNHX5ABz5ku3mrk4PTKImw1OxKZ4dVF+l6clVzO
+JE9buN49vPh2EgbtfRJYKLKryiNvGiOKIdfWq8YGNed//l1ZlufBXsN80z0rQ/6t
+U4HkAKxMB4QhAgMBAAGjUzBRMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFK9z
+r7IGNAr0Jvl1uniIPxARGh42MB8GA1UdIwQYMBaAFBNNP/CWV3SWpi7EEqUWXVfE
+5GGfMA0GCSqGSIb3DQEBCwUAA4IBAQBiXIIfQSDSm2d/KH/QLIKSDCmFiuo/Cbl8
+j0qfZiKZpEJZYZbclDL4D2xygKRwYQvr+wENxPHuK5FXfV9s+0SWb1RFILLDxEh9
+2AfWanIF1wiYnttgZz5r8qTeWhlO9YjXdtPbUZJn1fjRG2RNnvnVu9g7xynDqfgM
+YCxVZYMuxcfLjnk79w7vhO7rSPYTNdNjgLhi4JIl8vUMmT8aBa1ThiroPQU80+Do
+rd1sVCJOzpo5m+JzG1HGTXkUUcBxcl3wMqFL6cuBNOgOB65iwNHLDtdH4Kr8bekS
+UfZ7OBKamaQPjjy8LqW7D/1iyLo9WsHs9YvrbuOtVXei5nUvzLzq
+-----END CERTIFICATE-----
+)";
+
+static const char kInvalidLeafPEM[] = R"(
+-----BEGIN CERTIFICATE-----
+MIIDKDCCAhCgAwIBAgIUVAY0bjFNg62j9eUXQa52ys3vn8kwDQYJKoZIhvcNAQEL
+BQAwJDELMAkGA1UEBhMCVVMxFTATBgNVBAMMDGludGVybWVkaWF0ZTAgFw0yNDA5
+MzAxNTQzNDNaGA8yMjA0MDMwNzE1NDM0M1owHDELMAkGA1UEBhMCVVMxDTALBgNV
+BAMMBGxlYWYwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC+aErRy8Eq
+Gx2VIf8Mcd1mu9bS/xsP+k7Gss0M3PsM0Y8Dwklif6Jziv1HASA4HrQ7gpSCeSrt
+NG88T9FlH5Fy+83gYKWwe0ckNhFchulxYZKQyuxM/OLuHxCpBBDK/P4CoPb9HhEJ
+2bwUOgdWUJc5REElP5+IY3jaUUxinBHo+nz0T6ApZ1fJogyxOWhl0xnjKzeKlVjn
+qa9NqJ/iYrgk+Vl1pJ4MEAk3cgH6CUIIr8YPeE6cXeDElSJ+tjCS7JmxhJ50YUmE
+Glvza92lnx4Yw+ANCOmGMVrEqHjVfLDMkf1SwNJg0haaClk8znXjhwRoqdcYjh9Z
+lgLJySWMkLtrAgMBAAGjWDBWMBQGA1UdEQQNMAuCCWxvY2FsaG9zdDAdBgNVHQ4E
+FgQUZSZE6B/8nVuFwQpANs2U2WSlLY8wHwYDVR0jBBgwFoAUr3OvsgY0CvQm+XW6
+eIg/EBEaHjYwDQYJKoZIhvcNAQELBQADggEBAECgmWVqRZemNH9MIXB1LrXjv0bc
+DcAtt93XU9u2k05Mvvlk7eEoXmkLpFu/1lwkvgb1iyJFDgpSLsBftg+0FjGO3U6S
+UtKZZDlyYOeZpJqZseqs7yVunR0XuY6M6tGsUr5cPVC83pjY/ooHRHE/sYco9yYM
+JY0HA38D+325TyepCYgoanlKYtZXcQ0ePqy2xjKGiaEFzfeLKhRr+iqVB8pwCd6g
+Q2C5UykuOR7BcFEm9P9NubI54YOVYrF41Gz78GIFKgk3crOutLOi4INeelelLycl
+2LV+REf6cZeFFV8wTLpTjxaIl2Mcqtw4qf3jbT75sHq7XALA9Y+d9X8XCzs=
+-----END CERTIFICATE-----
+)";
+
+TEST(X509Test, PartialChain) {
+  bssl::UniquePtr<X509> root(CertFromPEM(kInvalidRootCAPEM));
+  bssl::UniquePtr<X509> intermediate(CertFromPEM(kInvalidIntermediatePEM));
+  bssl::UniquePtr<X509> leaf(CertFromPEM(kInvalidLeafPEM));
+  ASSERT_TRUE(root);
+  ASSERT_TRUE(intermediate);
+  ASSERT_TRUE(leaf);
+
+  bssl::UniquePtr<STACK_OF(X509)> intermediates_stack(
+      CertsToStack({}));
+  bssl::UniquePtr<STACK_OF(X509)> roots_stack(
+      CertsToStack({intermediate.get(), root.get()}));
+
+  bssl::UniquePtr<X509_STORE_CTX> ctx(X509_STORE_CTX_new());
+  bssl::UniquePtr<X509_STORE> store(X509_STORE_new());
+  ASSERT_TRUE(ctx);
+  ASSERT_TRUE(store);
+
+  ASSERT_TRUE(X509_STORE_CTX_init(ctx.get(), store.get(), leaf.get(),
+                                  intermediates_stack.get()));
+
+  X509_STORE_CTX_set0_trusted_stack(ctx.get(), roots_stack.get());
+//  X509_STORE_CTX_set0_crls(ctx.get(), crls_stack.get());
+
+  X509_VERIFY_PARAM *param = X509_STORE_CTX_get0_param(ctx.get());
+  time_t current_time = time(nullptr);
+  X509_VERIFY_PARAM_set_time_posix(param, current_time);
+  X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_PARTIAL_CHAIN);
+
+  ERR_clear_error();
+  EXPECT_EQ(X509_verify_cert(ctx.get()), 1);
+  fprintf(stderr, "%d\n", X509_STORE_CTX_get_error(ctx.get()));
+
+  STACK_OF(X509) *chain = X509_STORE_CTX_get0_chain(ctx.get());
+  EXPECT_EQ(sk_X509_num(chain), 2u);
+}
+
 #if defined(OPENSSL_THREADS)
 // Verifying the same |X509| objects on two threads should be safe.
 TEST(X509Test, VerifyThreads) {

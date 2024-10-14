@@ -2305,6 +2305,7 @@ static int build_chain(X509_STORE_CTX *ctx) {
             search = 0;
             continue;
           }
+          fprintf(stderr, "pushed since not self signed\n");
           //          ss = cert_self_signed(x);
           // Change to use |cert_self_signed|.
           if (!cert_self_signed(x, &is_self_signed)) {
@@ -2326,6 +2327,7 @@ static int build_chain(X509_STORE_CTX *ctx) {
             (void)sk_X509_set(ctx->chain, num, x = xtmp);
           }
         }
+      fprintf(stderr, "building chain: %zu self_signed: %d\n", sk_X509_num(ctx->chain), is_self_signed);
 
         // We've added a new trusted certificate to the chain, recheck trust.
         // If not done, and not self-signed look deeper. Whether or not we're
@@ -2344,7 +2346,8 @@ static int build_chain(X509_STORE_CTX *ctx) {
           search &= ~S_DOUNTRUSTED;
           switch (trust = check_trust(ctx, num)) {
             case X509_TRUST_TRUSTED:
-            case X509_TRUST_REJECTED:
+              fprintf(stderr, "we have trust so return early\n");
+            __attribute__((fallthrough)); case X509_TRUST_REJECTED:
               search = 0;
               continue;
           }
