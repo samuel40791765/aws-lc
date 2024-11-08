@@ -464,6 +464,8 @@ add_library(
   pkcs7/bio/md.c
   pkcs7/pkcs7.c
   pkcs7/pkcs7_asn1.c
+  pkcs7/pkcs7_smime_read.c
+  pkcs7/pkcs7_smime_write.c
   pkcs7/pkcs7_x509.c
   pkcs8/pkcs8.c
   pkcs8/pkcs8_x509.c

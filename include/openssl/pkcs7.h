@@ -340,6 +340,9 @@ OPENSSL_EXPORT OPENSSL_DEPRECATED PKCS7 *PKCS7_sign(X509 *sign_cert,
                                                     STACK_OF(X509) *certs,
                                                     BIO *data, int flags);
 
+OPENSSL_EXPORT int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags);
+
+OPENSSL_EXPORT PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont);
 
 #if defined(__cplusplus)
 }  // extern C
