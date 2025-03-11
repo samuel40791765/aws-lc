@@ -390,6 +390,20 @@ OPENSSL_EXPORT ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **out,
 OPENSSL_EXPORT int ASN1_item_i2d(ASN1_VALUE *val, unsigned char **outp,
                                  const ASN1_ITEM *it);
 
+// ASN1_item_ndef_i2d marshals |val| as the ASN.1 type associated with |it|, as
+// described in |i2d_SAMPLE|.
+//
+// This function may not be used with |ASN1_ITEM|s whose C type is
+// |ASN1_BOOLEAN|.
+//
+// WARNING: Passing a pointer of the wrong type into this function is a
+// potentially exploitable memory error. Callers must ensure |val| is consistent
+// with |it|. Prefer using type-specific functions such as
+// |i2d_ASN1_OCTET_STRING|.
+OPENSSL_EXPORT int ASN1_item_ndef_i2d(ASN1_VALUE *val, unsigned char **outp,
+                                      const ASN1_ITEM *it);
+
+
 // ASN1_dup returns a newly-allocated copy of |x| by re-encoding with |i2d| and
 // |d2i|. |i2d| and |d2i| must be the corresponding type functions of |x|. NULL
 // is returned on error.
@@ -603,6 +617,11 @@ struct asn1_string_st {
 // value. When not set, all trailing zero bits in the last byte are implicitly
 // treated as padding. This behavior is deprecated and should not be used.
 #define ASN1_STRING_FLAG_BITS_LEFT 0x08
+
+// ASN1_STRING_FLAG_NDEF indicates that the ASN1_STRING is not a real value but
+// just a place holder for the location where indefinite length constructed
+// data should be inserted in the memory buffer.
+#define ASN1_STRING_FLAG_NDEF 0x010
 
 // ASN1_STRING_type_new returns a newly-allocated empty |ASN1_STRING| object of
 // type |type|, or NULL on error.

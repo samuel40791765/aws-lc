@@ -131,6 +131,7 @@ void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
       }
       break;
 
+    case ASN1_ITYPE_NDEF_SEQUENCE:
     case ASN1_ITYPE_SEQUENCE: {
       if (!asn1_refcount_dec_and_test_zero(pval, it)) {
         return;

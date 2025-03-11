@@ -253,6 +253,7 @@ typedef struct {
 OPENSSL_EXPORT void asn1_get_string_table_for_testing(
     const ASN1_STRING_TABLE **out_ptr, size_t *out_len);
 
+DECLARE_ASN1_ITEM(ASN1_OCTET_STRING_NDEF)
 
 #if defined(__cplusplus)
 }  // extern C

@@ -2068,3 +2068,196 @@ TEST(PKCS7Test, SetDetached) {
   EXPECT_TRUE(PKCS7_set_detached(p7.get(), 1));
   EXPECT_FALSE(p7.get()->d.sign->contents->d.data);
 }
+
+// TEST(PKCS7Test, Temp) {
+  static const char kPKCS7AWSLC[] = R"(-----BEGIN PKCS7-----
+MIIDcQYJKoZIhvcNAQcDoIIDYjCCA14CAQAxggEQMIIBDAIBADB1MHAxEDAOBgNV
+BAoMB2V4YW1wbGUxFzAVBgNVBAMMDlRBUk1BQyBST09UIENBMSIwIAYJKoZIhvcN
+AQkBFhNzb21lb25lQGV4YW1wbGUub3JnMQswCQYDVQQGEwJVUzESMBAGA1UEBwwJ
+VG93biBIYWxsAgFmMA0GCSqGSIb3DQEBAQUABIGAbKV17HvGYRtRRBNz1QLpW763
+UedhVj5KXi70o4BJGM04lItAgt6aFC9SruZjpWr1gCYKCaRSAg273DeGTQwsDoZ8
+6CPXzBpptYLz0MteQXYYWUaPZT+xmvx4NgDyk9P9MoT7JifsPrtXuzqCRFXhGdu8
+d/ru+OWxhHLvKH+bYekwggJDBgkqhkiG9w0BBwEwFAYIKoZIhvcNAwcECBNs2U5m
+Msd/gIICHgSCAhBTpy6vxAHPTb/h4ykd2VT0iTKtEyJoxn+TL3N5w4COe9h3aNmp
+LtGFzOlo0lpKWLcaYOwqsX5eoT0nnyz1JwapSKDNqm6xOzEihFQ+vtm1vRqmDxVY
+OKkCy7DsZ8SSDHzryxX3e4Li/oix+NuF34lFMWn/BHWROLtiBJeERL5EtRaBBsMg
+OARBjEnlT3nUAm2dKmOz3NrZmRN13xFISLMkrRtDW+ougCnABWBmqW4BOpAAdIML
+GHB5VjDr7L3QH3E6uo8LR5TtbOvKrb5Fqrk0PZaV/n83XVFDcRB0qr+XlN6KOn09
+1Y+WRSFZWgOU4WTKyOT4ET7sCTOBi/P1S8GOZmwyxap/4qxnhLz/fSd0vO6K5yy7
+p46cUstfwMpnFXqdh99k4/NlkvyEUFwTs8+BJ0ESRrMysQFerWPmY3t7Fsk04Dm4
+ZbIk0Ew4J77UlvEb1R6iq8IJMcRLER4O7vFHc2dI4PjuftxfAevzVjMrbNDmhak/
+cLyPMju1SMt3VLRnc+x3XuhoKf4k59S24HSdzfB88X9Y+jTFlCh1bGnb8KUSW1Hq
+qvXN/kLsbCYvMFnpscUAhPrT8nNXT/no+fzO2xEW0jhzBoF9N++fCLz+wP38tg4x
+j79vpQMJRJHtFM3td+u0CoMTNJ3N0mQ5abWO8zyCQubGll2/Ebdm8NicRATk2r66
+fmcCfLXB/etaJ6sECMTme2ICaCzk
+-----END PKCS7-----
+)";
+
+  static const char kPKCS7OpenSSL[] = R"(-----BEGIN PKCS7-----
+MIIDawYJKoZIhvcNAQcDoIIDXDCCA1gCAQAxggEQMIIBDAIBADB1MHAxEDAOBgNV
+BAoMB2V4YW1wbGUxFzAVBgNVBAMMDlRBUk1BQyBST09UIENBMSIwIAYJKoZIhvcN
+AQkBFhNzb21lb25lQGV4YW1wbGUub3JnMQswCQYDVQQGEwJVUzESMBAGA1UEBwwJ
+VG93biBIYWxsAgFmMA0GCSqGSIb3DQEBAQUABIGAbKV17HvGYRtRRBNz1QLpW763
+UedhVj5KXi70o4BJGM04lItAgt6aFC9SruZjpWr1gCYKCaRSAg273DeGTQwsDoZ8
+6CPXzBpptYLz0MteQXYYWUaPZT+xmvx4NgDyk9P9MoT7JifsPrtXuzqCRFXhGdu8
+d/ru+OWxhHLvKH+bYekwggI9BgkqhkiG9w0BBwEwFAYIKoZIhvcNAwcECBNs2U5m
+Msd/gIICGFOnLq/EAc9Nv+HjKR3ZVPSJMq0TImjGf5Mvc3nDgI572Hdo2aku0YXM
+6WjSWkpYtxpg7Cqxfl6hPSefLPUnBqlIoM2qbrE7MSKEVD6+2bW9GqYPFVg4qQLL
+sOxnxJIMfOvLFfd7guL+iLH424XfiUUxaf8EdZE4u2IEl4REvkS1FoEGwyA4BEGM
+SeVPedQCbZ0qY7Pc2tmZE3XfEUhIsyStG0Nb6i6AKcAFYGapbgE6kAB0gwsYcHlW
+MOvsvdAfcTq6jwtHlO1s68qtvkWquTQ9lpX+fzddUUNxEHSqv5eU3oo6fT3Vj5ZF
+IVlaA5ThZMrI5PgRPuwJM4GL8/VLwY5mbDLFqn/irGeEvP99J3S87ornLLunjpxS
+y1/AymcVep2H32Tj82WS/IRQXBOzz4EnQRJGszKxAV6tY+Zje3sWyTTgObhlsiTQ
+TDgnvtSW8RvVHqKrwgkxxEsRHg7u8UdzZ0jg+O5+3F8B6/NWMyts0OaFqT9wvI8y
+O7VIy3dUtGdz7Hde6Ggp/iTn1LbgdJ3N8Hzxf1j6NMWUKHVsadvwpRJbUeqq9c3+
+QuxsJi8wWemxxQCE+tPyc1dP+ej5/M7bERbSOHMGgX03758IvP7A/fy2DjGPv2+l
+AwlEke0Uze1367QKgxM0nc3SZDlptY7zPIJC5saWXb8Rt2bw2JxEBOTavrp+ZwJ8
+tcH961onq8Tme2ICaCzk
+-----END PKCS7-----
+)";
+//
+//   bssl::UniquePtr<BIO> bio(BIO_new_mem_buf(kPKCS7AWSLC, strlen(kPKCS7AWSLC)));
+//   ASSERT_TRUE(bio);
+//   bssl::UniquePtr<PKCS7> pkcs7(
+//       PEM_read_bio_PKCS7(bio.get(), nullptr, nullptr, nullptr));
+//   ASSERT_TRUE(pkcs7);
+//   ASSERT_TRUE(PKCS7_type_is_enveloped(pkcs7.get()));
+//
+//   bssl::UniquePtr<BIO> bio2(BIO_new_mem_buf(kPKCS7OpenSSL, strlen(kPKCS7OpenSSL)));
+//   ASSERT_TRUE(bio2);
+//   bssl::UniquePtr<PKCS7> pkcs72(
+//       PEM_read_bio_PKCS7(bio2.get(), nullptr, nullptr, nullptr));
+//   ASSERT_TRUE(pkcs72);
+//   ASSERT_TRUE(PKCS7_type_is_enveloped(pkcs72.get()));
+//
+//   // Actually do the conversion
+//   uint8_t *tmp = nullptr;
+//   int len = i2d_ASN1_OCTET_STRING(pkcs7->d.encrypted->enc_data->enc_data, &tmp);
+//   if (len <= 0) {
+//     OPENSSL_free(tmp);
+//     fprintf(stderr, "Failed to convert ASN1 data\n");
+//   }
+//
+//   // Print the hex dump
+//   fprintf(stderr, "ASN1 encoded data (length: %d):\n", len);
+//   for (int i = 0; i < len; i++) {
+//     fprintf(stderr, "%02x", tmp[i]);
+//     // Add space every byte and newline every 16 bytes for readability
+//     if (i % 16 == 15)
+//       fprintf(stderr, "\n");
+//     else
+//       fprintf(stderr, " ");
+//   }
+//   // Add final newline if we didn't end on a 16-byte boundary
+//   if (len % 16 != 0) {
+//     fprintf(stderr, "\n\n\n\n");
+//   }
+//
+//   // Actually do the conversion
+//   uint8_t *tmp2 = nullptr;
+//   int len2 = i2d_ASN1_OCTET_STRING(pkcs72->d.encrypted->enc_data->enc_data, &tmp2);
+//   if (len2 <= 0) {
+//     OPENSSL_free(tmp2);
+//     fprintf(stderr, "Failed to convert ASN1 data\n");
+//   }
+//
+//   // Print the hex dump
+//   fprintf(stderr, "ASN1 encoded data (length: %d):\n", len2);
+//   for (int i = 0; i < len2; i++) {
+//     fprintf(stderr, "%02x", tmp2[i]);
+//     // Add space every byte and newline every 16 bytes for readability
+//     if (i % 16 == 15)
+//       fprintf(stderr, "\n");
+//     else
+//       fprintf(stderr, " ");
+//   }
+//   // Add final newline if we didn't end on a 16-byte boundary
+//   if (len2 % 16 != 0) {
+//     fprintf(stderr, "\n");
+//   }
+//
+//   // bssl::UniquePtr<BIO> print(BIO_new_fp(stderr, 0));
+//   // ASN1_STRING_print(print.get(), pkcs72.get()->d.encrypted->enc_data->enc_data);
+//   ASSERT_EQ(ASN1_OCTET_STRING_cmp(pkcs7.get()->d.encrypted->enc_data->enc_data, pkcs72.get()->d.encrypted->enc_data->enc_data), 0);
+// }
+
+TEST(PKCS7Test, RubyOutput) {
+  static const char kPKCS7Ruby[] = R"(
+-----BEGIN PKCS7-----
+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
+-----END PKCS7-----
+)";
+
+
+  bssl::UniquePtr<BIO> bio(BIO_new_mem_buf(kPKCS7Ruby, strlen(kPKCS7Ruby)));
+  ASSERT_TRUE(bio);
+  bssl::UniquePtr<PKCS7> pkcs7(
+      PEM_read_bio_PKCS7(bio.get(), nullptr, nullptr, nullptr));
+  ASSERT_TRUE(pkcs7);
+  ASSERT_TRUE(PKCS7_type_is_signed(pkcs7.get()));
+
+  // but otherwise, it should succeed
+  bssl::UniquePtr<X509_STORE> store(X509_STORE_new());
+  bssl::UniquePtr<BIO> out(BIO_new(BIO_s_mem()));
+  PKCS7_verify(pkcs7.get(), nullptr, store.get(), nullptr,
+                           out.get(), /*flags*/ PKCS7_NOVERIFY);
+  ERR_clear_error();
+
+  BUF_MEM *buf;
+  BIO_get_mem_ptr(out.get(), &buf);
+  bssl::UniquePtr<BIO> out2(BIO_new_mem_buf(buf->data, buf->length));
+  bssl::UniquePtr<PKCS7> new_pk7(d2i_PKCS7_bio(out2.get(), nullptr));
+  ASSERT_TRUE(new_pk7);
+
+  bssl::UniquePtr<BIO> out3(BIO_new(BIO_s_mem()));
+  PEM_write_bio_PKCS7(out3.get(), new_pk7.get());
+
+  BIO_get_mem_ptr(out3.get(), &buf);
+  // fprintf(stderr, "PEM encoded data (length: %zu):\n", buf->length);
+  // for (size_t i = 0; i < buf->length; i++) {
+  //   fprintf(stderr, "%c", buf->data[i]);
+  // }
+
+  EXPECT_EQ(Bytes(buf->data, buf->length), Bytes(kPKCS7AWSLC));
+  EXPECT_EQ(Bytes(buf->data, buf->length), Bytes(kPKCS7OpenSSL));
+}
+
+

@@ -147,6 +147,7 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
       break;
     }
 
+    case ASN1_ITYPE_NDEF_SEQUENCE:
     case ASN1_ITYPE_SEQUENCE: {
       const ASN1_AUX *aux = it->funcs;
       ASN1_aux_cb *asn1_cb = aux != NULL ? aux->asn1_cb : NULL;
@@ -213,6 +214,7 @@ static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it) {
 
     case ASN1_ITYPE_CHOICE:
     case ASN1_ITYPE_SEQUENCE:
+    case ASN1_ITYPE_NDEF_SEQUENCE:
       *pval = NULL;
       break;
   }
