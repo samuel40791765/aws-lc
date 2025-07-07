@@ -1,4 +1,4 @@
-# BoringSSL API Conventions
+# AWS-LC  API Conventions
 
 This document describes conventions for BoringSSL APIs. The [style
 guide](./STYLE.md) also includes guidelines, but this document is targeted at
