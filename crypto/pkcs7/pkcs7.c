@@ -1740,8 +1740,6 @@ out:
   return ret;
 }
 
-PKCS7 *SMIME_read_PKCS7(BIO *in, BIO **bcont) { return NULL; }
-
 int SMIME_write_PKCS7(BIO *out, PKCS7 *p7, BIO *data, int flags) { return 0; }
 
 OPENSSL_END_ALLOW_DEPRECATED

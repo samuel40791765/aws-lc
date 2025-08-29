@@ -463,6 +463,7 @@ add_library(
   pkcs7/bio/cipher.c
   pkcs7/pkcs7.c
   pkcs7/pkcs7_asn1.c
+  pkcs7/pkcs7_smime.c
   pkcs7/pkcs7_x509.c
   pkcs8/pkcs8.c
   pkcs8/pkcs8_x509.c
