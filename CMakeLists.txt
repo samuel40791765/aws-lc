@@ -6,6 +6,7 @@ endif()
 
 set(SOFTWARE_NAME "awslc")
 set(SOFTWARE_VERSION "1.72.1")
+set(AWSLC_FIPS_VERSION 4)
 set(ABI_VERSION 0)
 set(CRYPTO_LIB_NAME "crypto")
 set(SSL_LIB_NAME "ssl")
