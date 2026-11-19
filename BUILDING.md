@@ -197,11 +197,6 @@ picked up.
 variable, which wins. The environment is ignored in set-uid and set-gid
 processes.
 
-### Rust Components (experimental, opt-in)
-
-`-DENABLE_RUST=ON` builds the Rust code under `crypto/rust` into libcrypto.
-It requires `cargo`. See [crypto/rust/README.md](crypto/rust/README.md).
-
 ### Other Build Options
 
 See [CMake's documentation](https://cmake.org/cmake/help/v3.4/manual/cmake-variables.7.html)

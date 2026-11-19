@@ -334,20 +334,14 @@ if(GENERATE_RUST_BINDINGS)
   endif()
 endif()
 
-# Validate Rust component prerequisites. These configurations are not yet
-# supported: the FIPS module boundary has not been defined for Rust code,
-# BORINGSSL_PREFIX does not rename symbols defined in Rust, and symbol
-# versioning would hide the Rust test hooks, which are not in the registry.
+# Validate Rust component prerequisites. Not yet supported: FIPS, because the
+# FIPS module boundary has not been defined for Rust code, and BORINGSSL_PREFIX.
 if(ENABLE_RUST)
   if(FIPS)
     message(FATAL_ERROR "ENABLE_RUST is not yet supported with FIPS")
   endif()
   if(BORINGSSL_PREFIX)
     message(FATAL_ERROR "ENABLE_RUST is not yet supported with BORINGSSL_PREFIX")
-  endif()
-  if(ENABLE_SYMBOL_VERSIONING)
-    message(FATAL_ERROR "ENABLE_RUST is not yet supported with symbol versioning; "
-                        "configure with -DENABLE_SYMBOL_VERSIONING=OFF")
   endif()
   include(cmake/cargo.cmake)
 endif()
@@ -1534,18 +1528,6 @@ else()
   set(PKGCONFIG_LIBS_PRIVATE "")
 endif()
 
-if(ENABLE_RUST)
-  # Rust components of libcrypto. Defined here, rather than in crypto/, so the
-  # imported target is visible to every directory that links libcrypto.
-  cargo_add_staticlib(caracal_ffi
-    MANIFEST_PATH "${AWSLC_SOURCE_DIR}/crypto/rust/Cargo.toml"
-    PACKAGE caracal-ffi
-    LIB_NAME caracal_ffi)
-  if(NOT BUILD_SHARED_LIBS)
-    # A static libcrypto needs the Rust archive at the final link.
-    string(STRIP "${PKGCONFIG_LIBS_PRIVATE} -lcaracal_ffi" PKGCONFIG_LIBS_PRIVATE)
-  endif()
-endif()
 
 add_subdirectory(crypto)
 if(BUILD_LIBSSL)

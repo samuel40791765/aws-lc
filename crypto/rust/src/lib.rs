@@ -1,22 +1,20 @@
 // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-//! C ABI for `caracal`, built as a static library and linked into libcrypto.
-//!
-//! `include/caracal_ffi.h` is generated from this file by cbindgen. Run
-//! `util/generate_caracal_ffi_header.sh` after changing any exported item.
-//! Doc comments on exported items are copied into the header, so write them
-//! for C readers.
-//!
-//! Functions follow libcrypto conventions: they return 1 on success and 0 on
-//! failure, and never panic across the boundary.
-//!
-//! These symbols are internal to libcrypto. C code in libcrypto calls them;
-//! they are not part of AWS-LC's public API.
+//! Rust code folded into libcrypto as `rust.o` (cmake/cargo.cmake). Its C-ABI
+//! functions, declared in `internal.h`, are internal to libcrypto. They return
+//! 1 on success and 0 on failure, and never panic across the boundary.
 
-#![cfg_attr(not(test), no_std)]
+#![no_std]
 
 use core::ffi::c_int;
+
+/// Returns the sum of all bytes in `input`, wrapping on overflow.
+fn byte_sum(input: &[u8]) -> u64 {
+    input
+        .iter()
+        .fold(0u64, |acc, &b| acc.wrapping_add(u64::from(b)))
+}
 
 /// Builds a byte slice from a C pointer and length.
 ///
@@ -65,13 +63,11 @@ pub unsafe extern "C" fn caracal_byte_sum(
         return 0;
     };
     // SAFETY: `out` is non-NULL and the caller guarantees it is writable.
-    unsafe { out.write(caracal::byte_sum(input)) };
+    unsafe { out.write(byte_sum(input)) };
     1
 }
 
-/// Runtime support required because this is a `no_std` staticlib. Excluded
-/// from `cargo test`, where `std` provides them.
-#[cfg(not(test))]
+/// Runtime support a `no_std` staticlib must provide.
 mod rt {
     unsafe extern "C" {
         fn abort() -> !;
@@ -83,47 +79,12 @@ mod rt {
         unsafe { abort() }
     }
 
-    /// The prebuilt `core` library is compiled for unwinding, so its objects
-    /// reference the personality routine even though this crate is built with
-    /// `panic = "abort"`. Defining the real one requires nightly. Nothing can
-    /// unwind through Rust frames here, so it is unreachable; abort if not.
+    /// The prebuilt `core` is built for unwinding, so it refers to the
+    /// personality routine even with `panic = "abort"`, and the real one needs
+    /// nightly. Nothing unwinds through Rust frames here, so this one aborts.
     #[unsafe(no_mangle)]
     extern "C" fn rust_eh_personality() -> ! {
         // SAFETY: `abort` takes no arguments and never returns.
         unsafe { abort() }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use core::ptr;
-
-    #[test]
-    fn byte_sum_ok() {
-        let data = [1u8, 2, 3];
-        let mut out = 0u64;
-        // SAFETY: `data` and `out` are valid for the call.
-        let ret = unsafe { caracal_byte_sum(data.as_ptr(), data.len(), &mut out) };
-        assert_eq!(ret, 1);
-        assert_eq!(out, 6);
-    }
-
-    #[test]
-    fn byte_sum_null_empty_input() {
-        let mut out = 1u64;
-        // SAFETY: NULL with zero length is permitted; `out` is valid.
-        assert_eq!(unsafe { caracal_byte_sum(ptr::null(), 0, &mut out) }, 1);
-        assert_eq!(out, 0);
-    }
-
-    #[test]
-    fn byte_sum_rejects_null() {
-        let mut out = 0u64;
-        // SAFETY: NULL pointers are rejected before any dereference.
-        unsafe {
-            assert_eq!(caracal_byte_sum(ptr::null(), 1, &mut out), 0);
-            assert_eq!(caracal_byte_sum([0u8].as_ptr(), 1, ptr::null_mut()), 0);
-        }
     }
 }

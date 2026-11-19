@@ -10,13 +10,8 @@
 extern "C" {
 #endif
 
-// AWSLC_RUST is defined when AWS-LC is configured with -DENABLE_RUST=ON, which
-// links the Rust code under crypto/rust into libcrypto. The Rust symbols
-// themselves are not exported from libcrypto; C code wraps them.
-//
-// The declarations below are guarded so that the symbol registry tooling,
-// which scans headers without AWSLC_RUST, does not pick them up.
-#if defined(AWSLC_RUST)
+// -DENABLE_RUST=ON links the Rust code under crypto/rust into libcrypto. The
+// Rust symbols themselves are not exported from libcrypto; C code wraps them.
 
 // CRYPTO_rust_byte_sum writes the sum of the |in_len| bytes at |in| to |*out|
 // using the Rust implementation. It returns one on success and zero on error.
@@ -24,7 +19,20 @@ extern "C" {
 OPENSSL_EXPORT int CRYPTO_rust_byte_sum(const uint8_t *in, size_t in_len,
                                         uint64_t *out);
 
-#endif  // AWSLC_RUST
+// Rust functions, defined in src/lib.rs. rustc gives them default visibility,
+// and an ELF linker keeps the strictest visibility of any declaration, so
+// declaring them hidden keeps them out of libcrypto's exports.
+#if defined(__GNUC__) || defined(__clang__)
+#define AWSLC_RUST_HIDDEN __attribute__((visibility("hidden")))
+#else
+#define AWSLC_RUST_HIDDEN
+#endif
+
+// caracal_byte_sum writes the sum of the |input_len| bytes at |input| to
+// |*out|. It returns one on success, or zero if |out| is NULL or |input| is
+// NULL with a non-zero |input_len|.
+AWSLC_RUST_HIDDEN int caracal_byte_sum(const uint8_t *input, size_t input_len,
+                                       uint64_t *out);
 
 #if defined(__cplusplus)
 }  // extern C
