@@ -6,8 +6,13 @@
 # adds the way the FIPS build adds bcm.o. Consumers still link only libcrypto.
 # Cargo discovery comes from the caracal PoC's cmake/cargo.cmake.
 
+# Multi-config generators build one rust.o per configuration. The build tool
+# expands ${CMAKE_CFG_INTDIR} in custom command outputs on every CMake
+# version; $<CONFIG> there needs CMake 3.20.
 if(CMAKE_CONFIGURATION_TYPES)
-  message(FATAL_ERROR "ENABLE_RUST does not support multi-config generators yet")
+  set(RUST_CONFIG_DIR "/${CMAKE_CFG_INTDIR}")
+else()
+  set(RUST_CONFIG_DIR "")
 endif()
 # Cargo builds one target per run, so rust.o holds one architecture.
 if(APPLE AND CMAKE_OSX_ARCHITECTURES MATCHES ";")
@@ -256,7 +261,7 @@ function(cargo_add_rust_object)
   get_filename_component(crate_dir "${arg_MANIFEST_PATH}" DIRECTORY)
   file(GLOB_RECURSE rust_sources "${crate_dir}/*.rs" "${crate_dir}/Cargo.toml" "${crate_dir}/Cargo.lock")
 
-  set(target_dir "${AWSLC_BINARY_DIR}/cargo")
+  set(target_dir "${AWSLC_BINARY_DIR}/cargo${RUST_CONFIG_DIR}")
   set(out_dir "${target_dir}")
   set(cargo_target_args "")
   if(RUST_CARGO_TARGET)
@@ -268,7 +273,9 @@ function(cargo_add_rust_object)
 
   # Debug (or no build type) gets Rust's debug settings, anything else Release's.
   string(TOLOWER "${CMAKE_BUILD_TYPE}" build_type_lower)
-  if(build_type_lower MATCHES "^(debug)?$")
+  if(CMAKE_CONFIGURATION_TYPES)
+    set(is_debug "$<CONFIG:Debug>")
+  elseif(build_type_lower MATCHES "^(debug)?$")
     set(is_debug 1)
   else()
     set(is_debug 0)
@@ -379,6 +386,7 @@ function(cargo_add_rust_object)
 
   add_custom_command(
     OUTPUT "${arg_OUTPUT}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${output_dir}"
     COMMAND ${cargo_env} ${CARGO_EXECUTABLE} build
       --locked --offline
       --manifest-path "${arg_MANIFEST_PATH}"

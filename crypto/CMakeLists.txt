@@ -221,7 +221,7 @@ if(ENABLE_RUST)
   # rust-phase0: one relocatable object holding all library Rust code, entered
   # into build_libcrypto() like bcm.o. Only the listed C-ABI entry points stay
   # global, and internal.h declares them hidden.
-  set(RUST_OBJECT "${CMAKE_CURRENT_BINARY_DIR}/rust${CMAKE_C_OUTPUT_EXTENSION}")
+  set(RUST_OBJECT "${CMAKE_CURRENT_BINARY_DIR}${RUST_CONFIG_DIR}/rust${CMAKE_C_OUTPUT_EXTENSION}")
   cargo_add_rust_object(
     OUTPUT "${RUST_OBJECT}"
     MANIFEST_PATH "${AWSLC_SOURCE_DIR}/crypto/rust/Cargo.toml"
