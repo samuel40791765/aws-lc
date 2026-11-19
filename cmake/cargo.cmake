@@ -254,8 +254,9 @@ endif()
 #
 # Adds a custom command producing OUTPUT, in which only EXPORTS stay global.
 # C code must declare EXPORTS with hidden visibility (crypto/rust/internal.h),
-# which keeps them out of libcrypto's exports. Use OUTPUT as a source file of a
-# target in the same directory.
+# which keeps them out of libcrypto's exports. With BORINGSSL_PREFIX, EXPORTS
+# carry the prefix in both the Rust and the C code. Use OUTPUT as a source file
+# of a target in the same directory.
 function(cargo_add_rust_object)
   cmake_parse_arguments(arg "" "OUTPUT;MANIFEST_PATH;LIB_NAME" "EXPORTS" ${ARGN})
   get_filename_component(crate_dir "${arg_MANIFEST_PATH}" DIRECTORY)
@@ -299,15 +300,36 @@ function(cargo_add_rust_object)
     --config "${P}.incremental=false"
     --config "build.rustc-wrapper=\"\""
     --config "build.rustc-workspace-wrapper=\"\"")
+  set(rustflags ${RUST_FLAGS})
+  set(symbol_prefix "")
+  set(export_prefix "")
+  if(BORINGSSL_PREFIX)
+    # src/lib.rs prefixes its exports with the prefix the C code gets from
+    # boringssl_prefix_symbols.h. Supplied headers set their own, which can
+    # differ: aws-lc-sys passes BORINGSSL_PREFIX=<prefix>_ with headers that
+    # define <prefix>.
+    set(symbol_prefix "${BORINGSSL_PREFIX}")
+    if(BORINGSSL_PREFIX_HEADERS_PATH)
+      file(STRINGS "${BORINGSSL_PREFIX_HEADERS_PATH}/openssl/boringssl_prefix_symbols.h"
+           prefix_define REGEX "^#define BORINGSSL_PREFIX [A-Za-z0-9_]+" LIMIT_COUNT 1)
+      if(prefix_define)
+        string(REGEX REPLACE "^#define BORINGSSL_PREFIX ([A-Za-z0-9_]+).*" "\\1"
+               symbol_prefix "${prefix_define}")
+      endif()
+    endif()
+    list(APPEND rustflags --cfg=awslc_prefix)
+    set(export_prefix "${symbol_prefix}_")
+  endif()
   # CARGO_ENCODED_RUSTFLAGS separates flags with 0x1f.
   string(ASCII 31 unit_sep)
-  string(REPLACE ";" "${unit_sep}" encoded_rustflags "${RUST_FLAGS}")
+  string(REPLACE ";" "${unit_sep}" encoded_rustflags "${rustflags}")
   # RUSTC and RUSTC_WRAPPER env vars are read by Cargo directly, so pin them too.
   set(cargo_env ${CMAKE_COMMAND} -E env
     "RUSTC=${RUSTC_EXECUTABLE}"
     "RUSTC_WRAPPER="
     "RUSTC_WORKSPACE_WRAPPER="
     "CARGO_ENCODED_RUSTFLAGS=${encoded_rustflags}"
+    "BORINGSSL_PREFIX=${symbol_prefix}"
     --unset=RUSTFLAGS)
   if(APPLE)
     # rustc reads the deployment target from the environment. Match the C code.
@@ -332,6 +354,7 @@ function(cargo_add_rust_object)
   set(export_syms "")
   set(undefined_args "")
   foreach(sym ${arg_EXPORTS})
+    set(sym "${export_prefix}${sym}")
     if(APPLE)
       # Mach-O prefixes C symbol names with an underscore.
       set(sym "_${sym}")
@@ -375,7 +398,7 @@ function(cargo_add_rust_object)
     set(fold_commands
       COMMAND ${CMAKE_COMMAND} "-DLLVM_AR=${RUST_LLVM_AR}" "-DLLVM_NM=${RUST_LLVM_NM}"
         "-DLLVM_OBJDUMP=${RUST_LLVM_OBJDUMP}" "-DLLVM_OBJCOPY=${RUST_LLVM_OBJCOPY}"
-        "-DPERSONALITY=awslc_rust_eh_personality" "-DSTATICLIB=${staticlib}"
+        "-DPERSONALITY=${export_prefix}awslc_rust_eh_personality" "-DSTATICLIB=${staticlib}"
         "-DEXPORTS_FILE=${exports_file}" "-DOUTPUT=${arg_OUTPUT}"
         -P "${AWSLC_SOURCE_DIR}/cmake/rust_crate_object_fold.cmake")
   else()

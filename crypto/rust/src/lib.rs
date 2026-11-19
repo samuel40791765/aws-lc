@@ -49,7 +49,14 @@ unsafe fn slice_from_c<'a>(ptr: *const u8, len: usize) -> Option<&'a [u8]> {
 ///
 /// `input` must be NULL or valid for reads of `input_len` bytes. `out` must be
 /// NULL or valid for writing a `uint64_t`.
-#[unsafe(no_mangle)]
+// rustc doesn't see the BORINGSSL_PREFIX headers, so in a prefix build CMake
+// sets the `awslc_prefix` cfg and the BORINGSSL_PREFIX environment variable,
+// and the function takes the prefixed name internal.h gives it.
+#[cfg_attr(not(awslc_prefix), unsafe(no_mangle))]
+#[cfg_attr(
+    awslc_prefix,
+    unsafe(export_name = concat!(env!("BORINGSSL_PREFIX"), "_caracal_byte_sum"))
+)]
 pub unsafe extern "C" fn caracal_byte_sum(
     input: *const u8,
     input_len: usize,

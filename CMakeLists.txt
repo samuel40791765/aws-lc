@@ -334,14 +334,11 @@ if(GENERATE_RUST_BINDINGS)
   endif()
 endif()
 
-# Validate Rust component prerequisites. Not yet supported: FIPS, because the
-# FIPS module boundary has not been defined for Rust code, and BORINGSSL_PREFIX.
+# Validate Rust component prerequisites. FIPS is not yet supported: the FIPS
+# module boundary has not been defined for Rust code.
 if(ENABLE_RUST)
   if(FIPS)
     message(FATAL_ERROR "ENABLE_RUST is not yet supported with FIPS")
-  endif()
-  if(BORINGSSL_PREFIX)
-    message(FATAL_ERROR "ENABLE_RUST is not yet supported with BORINGSSL_PREFIX")
   endif()
   include(cmake/cargo.cmake)
 endif()

@@ -18,6 +18,10 @@ publish = false
 [lib]
 crate-type = ["staticlib"]
 
+# CMake sets the awslc_prefix cfg in BORINGSSL_PREFIX builds (src/lib.rs).
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(awslc_prefix)"] }
+
 # The staticlib is linked into libcrypto, which has no Rust runtime to unwind
 # into. Unwinding across the C ABI is undefined behaviour, so abort instead.
 [profile.dev]

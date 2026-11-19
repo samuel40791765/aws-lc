@@ -28,6 +28,13 @@ OPENSSL_EXPORT int CRYPTO_rust_byte_sum(const uint8_t *in, size_t in_len,
 #define AWSLC_RUST_HIDDEN
 #endif
 
+// In a BORINGSSL_PREFIX build the Rust functions always carry the prefix
+// (src/lib.rs), so C has to use the prefixed names too. The prefix headers
+// rename them only if the symbols list names them.
+#if defined(BORINGSSL_PREFIX) && !defined(caracal_byte_sum)
+#define caracal_byte_sum BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, caracal_byte_sum)
+#endif
+
 // caracal_byte_sum writes the sum of the |input_len| bytes at |input| to
 // |*out|. It returns one on success, or zero if |out| is NULL or |input| is
 // NULL with a non-zero |input_len|.
