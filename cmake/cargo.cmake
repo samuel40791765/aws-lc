@@ -9,8 +9,9 @@
 if(CMAKE_CONFIGURATION_TYPES)
   message(FATAL_ERROR "ENABLE_RUST does not support multi-config generators yet")
 endif()
-if(APPLE)
-  message(FATAL_ERROR "ENABLE_RUST does not support Apple platforms yet")
+# Cargo builds one target per run, so rust.o holds one architecture.
+if(APPLE AND CMAKE_OSX_ARCHITECTURES MATCHES ";")
+  message(FATAL_ERROR "ENABLE_RUST does not support universal binaries")
 endif()
 
 find_program(CARGO_EXECUTABLE NAMES cargo
@@ -211,10 +212,11 @@ foreach(flag IN LISTS RUST_FLAGS)
   endif()
 endforeach()
 
-# The C toolchain's objcopy makes Rust symbols local, on ELF and MinGW GCC.
+# The C toolchain's objcopy makes Rust symbols local, on ELF and MinGW GCC, and
+# Apple's linker does it itself.
 if(rust_triple MATCHES "-windows-(msvc|gnullvm)$|^wasm")
   message(FATAL_ERROR "ENABLE_RUST does not support ${rust_triple} yet")
-elseif(NOT CMAKE_OBJCOPY)
+elseif(NOT APPLE AND NOT CMAKE_OBJCOPY)
   message(FATAL_ERROR "ENABLE_RUST needs objcopy")
 endif()
 
@@ -247,7 +249,10 @@ function(cargo_add_rust_object)
   else()
     set(is_debug 0)
   endif()
-  set(rust_opt "$<${is_debug}:0>$<$<NOT:${is_debug}>:3>")
+  # Debug uses opt-level 1, not 0. At 0, core's unwinding code keeps a
+  # reference to rust_eh_personality, which the Apple fold makes local, and
+  # pass 2 of the Xcode 16 and 26 linkers turns that into an undefined symbol.
+  set(rust_opt "$<${is_debug}:1>$<$<NOT:${is_debug}>:3>")
   set(rust_debug "$<${is_debug}:true>$<$<NOT:${is_debug}>:false>")
 
   # Forced settings (doc 3.2.1). --config outranks Cargo.toml and config files.
@@ -273,6 +278,19 @@ function(cargo_add_rust_object)
     "RUSTC_WORKSPACE_WRAPPER="
     "CARGO_ENCODED_RUSTFLAGS=${encoded_rustflags}"
     --unset=RUSTFLAGS)
+  if(APPLE)
+    # rustc reads the deployment target from the environment. Match the C code.
+    if(IOS)
+      set(deployment_var IPHONEOS_DEPLOYMENT_TARGET)
+    else()
+      set(deployment_var MACOSX_DEPLOYMENT_TARGET)
+    endif()
+    if(CMAKE_OSX_DEPLOYMENT_TARGET)
+      list(APPEND cargo_env "${deployment_var}=${CMAKE_OSX_DEPLOYMENT_TARGET}")
+    else()
+      list(APPEND cargo_env "--unset=${deployment_var}")
+    endif()
+  endif()
 
   # A partial link with `-u <export>` takes the crate object out of the
   # staticlib, plus only the members it needs (compiler_builtins helpers).
@@ -283,6 +301,10 @@ function(cargo_add_rust_object)
   set(export_syms "")
   set(undefined_args "")
   foreach(sym ${arg_EXPORTS})
+    if(APPLE)
+      # Mach-O prefixes C symbol names with an underscore.
+      set(sym "_${sym}")
+    endif()
     list(APPEND export_syms "${sym}")
     # -Wl,-u, because zig cc reads a bare -u argument as an input file.
     list(APPEND undefined_args "-Wl,-u,${sym}")
@@ -290,12 +312,39 @@ function(cargo_add_rust_object)
   string(REPLACE ";" "\n" exports_text "${export_syms}")
   file(WRITE "${exports_file}" "${exports_text}\n")
 
-  # The partial link runs through the C compiler, which tells the linker the
-  # target: with only a library as input, lld 14 needs -m.
-  set(partial_link ${CMAKE_C_COMPILER} -r -nostdlib ${RUST_LINK_C_FLAGS})
-  set(fold_commands
-    COMMAND ${partial_link} ${undefined_args} -o "${linked_obj}" "${staticlib}"
-    COMMAND ${CMAKE_OBJCOPY} "--keep-global-symbols=${exports_file}" "${linked_obj}" "${arg_OUTPUT}")
+  # The partial link runs through the driver CMake links C programs with,
+  # which tells the linker the target: with only a library as input, lld 14
+  # needs -m and Apple's ld -arch and -platform_version. zig's Apple toolchain
+  # file sets /usr/bin/cc as that driver.
+  string(REGEX MATCH "^[^ ]+" link_driver "${CMAKE_C_LINK_EXECUTABLE}")
+  if(NOT link_driver OR link_driver MATCHES "^<")
+    set(link_driver "${CMAKE_C_COMPILER}")
+  endif()
+  set(partial_link ${link_driver} -r -nostdlib ${RUST_LINK_C_FLAGS})
+  if(APPLE)
+    # Same -arch, -platform_version and SDK as the C code. Pass 1 makes every
+    # symbol but the exports local: hidden but global would still clash with
+    # a consumer's own Rust in a static link. Pass 2 hides the exports, because
+    # a Mach-O reference doesn't carry internal.h's hidden declaration.
+    # Apple's compilers call aarch64 arm64.
+    string(REPLACE aarch64 arm64 osx_arch "${CMAKE_SYSTEM_PROCESSOR}")
+    list(APPEND partial_link -arch ${osx_arch})
+    if(CMAKE_OSX_SYSROOT)
+      list(APPEND partial_link -isysroot "${CMAKE_OSX_SYSROOT}")
+    endif()
+    if(CMAKE_OSX_DEPLOYMENT_TARGET)
+      list(APPEND partial_link "${CMAKE_C_OSX_DEPLOYMENT_TARGET_FLAG}${CMAKE_OSX_DEPLOYMENT_TARGET}")
+    endif()
+    set(fold_commands
+      COMMAND ${partial_link} ${undefined_args}
+        "-Wl,-exported_symbols_list,${exports_file}" -o "${linked_obj}" "${staticlib}"
+      COMMAND ${partial_link} -Wl,-keep_private_externs
+        "-Wl,-unexported_symbols_list,${exports_file}" -o "${arg_OUTPUT}" "${linked_obj}")
+  else()
+    set(fold_commands
+      COMMAND ${partial_link} ${undefined_args} -o "${linked_obj}" "${staticlib}"
+      COMMAND ${CMAKE_OBJCOPY} "--keep-global-symbols=${exports_file}" "${linked_obj}" "${arg_OUTPUT}")
+  endif()
 
   add_custom_command(
     OUTPUT "${arg_OUTPUT}"
