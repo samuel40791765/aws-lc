@@ -213,9 +213,33 @@ foreach(flag IN LISTS RUST_FLAGS)
 endforeach()
 
 # The C toolchain's objcopy makes Rust symbols local, on ELF and MinGW GCC, and
-# Apple's linker does it itself.
+# Apple's linker does it itself. windows-msvc and windows-gnullvm have no
+# partial link, and wasm-ld's can't take -u, so those targets take the crate
+# object fold. It needs LLVM tools from rustup's llvm-tools or an LLVM C
+# toolchain.
+set(RUST_CRATE_OBJECT_FOLD OFF)
 if(rust_triple MATCHES "-windows-(msvc|gnullvm)$|^wasm")
-  message(FATAL_ERROR "ENABLE_RUST does not support ${rust_triple} yet")
+  set(RUST_CRATE_OBJECT_FOLD ON)
+  # The host's target-libdir is <sysroot>/lib/rustlib/<host>/lib.
+  execute_process(COMMAND ${RUSTC_EXECUTABLE} --print target-libdir
+    OUTPUT_VARIABLE rust_libdir OUTPUT_STRIP_TRAILING_WHITESPACE)
+  # Linux packages often install clang as a symlink into the LLVM bin directory.
+  get_filename_component(c_compiler_dir "${CMAKE_C_COMPILER}" DIRECTORY)
+  get_filename_component(c_compiler_real "${CMAKE_C_COMPILER}" REALPATH)
+  get_filename_component(c_compiler_real_dir "${c_compiler_real}" DIRECTORY)
+  set(llvm_tools ar nm objdump)
+  if(rust_triple MATCHES "-windows-gnullvm$")
+    list(APPEND llvm_tools objcopy)
+  endif()
+  foreach(tool IN LISTS llvm_tools)
+    string(TOUPPER "${tool}" TOOL)
+    find_program(RUST_LLVM_${TOOL} NAMES llvm-${tool} NO_DEFAULT_PATH
+                 HINTS "${rust_libdir}/../bin" "${c_compiler_dir}" "${c_compiler_real_dir}")
+    if(NOT RUST_LLVM_${TOOL})
+      message(FATAL_ERROR "ENABLE_RUST for ${rust_triple} needs llvm-${tool}: "
+                          "rustup component add llvm-tools")
+    endif()
+  endforeach()
 elseif(NOT APPLE AND NOT CMAKE_OBJCOPY)
   message(FATAL_ERROR "ENABLE_RUST needs objcopy")
 endif()
@@ -340,6 +364,13 @@ function(cargo_add_rust_object)
         "-Wl,-exported_symbols_list,${exports_file}" -o "${linked_obj}" "${staticlib}"
       COMMAND ${partial_link} -Wl,-keep_private_externs
         "-Wl,-unexported_symbols_list,${exports_file}" -o "${arg_OUTPUT}" "${linked_obj}")
+  elseif(RUST_CRATE_OBJECT_FOLD)
+    set(fold_commands
+      COMMAND ${CMAKE_COMMAND} "-DLLVM_AR=${RUST_LLVM_AR}" "-DLLVM_NM=${RUST_LLVM_NM}"
+        "-DLLVM_OBJDUMP=${RUST_LLVM_OBJDUMP}" "-DLLVM_OBJCOPY=${RUST_LLVM_OBJCOPY}"
+        "-DPERSONALITY=awslc_rust_eh_personality" "-DSTATICLIB=${staticlib}"
+        "-DEXPORTS_FILE=${exports_file}" "-DOUTPUT=${arg_OUTPUT}"
+        -P "${AWSLC_SOURCE_DIR}/cmake/rust_crate_object_fold.cmake")
   else()
     set(fold_commands
       COMMAND ${partial_link} ${undefined_args} -o "${linked_obj}" "${staticlib}"
@@ -356,7 +387,7 @@ function(cargo_add_rust_object)
       ${cargo_target_args}
       ${forced_config}
     ${fold_commands}
-    DEPENDS ${rust_sources}
+    DEPENDS ${rust_sources} "${AWSLC_SOURCE_DIR}/cmake/rust_crate_object_fold.cmake"
     COMMENT "Building Rust staticlib ${arg_LIB_NAME} into rust.o"
     USES_TERMINAL
     VERBATIM)

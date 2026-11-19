@@ -82,6 +82,9 @@ mod rt {
     /// The prebuilt `core` is built for unwinding, so it refers to the
     /// personality routine even with `panic = "abort"`, and the real one needs
     /// nightly. Nothing unwinds through Rust frames here, so this one aborts.
+    /// MSVC and wasm targets don't reference it, and their fold can't make it
+    /// local, so it's left out there. On windows-gnullvm the fold renames it.
+    #[cfg(not(any(all(windows, target_env = "msvc"), target_family = "wasm")))]
     #[unsafe(no_mangle)]
     extern "C" fn rust_eh_personality() -> ! {
         // SAFETY: `abort` takes no arguments and never returns.
