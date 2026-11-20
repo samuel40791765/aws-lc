@@ -66,7 +66,7 @@ func TestDelocate(t *testing.T) {
 			}
 
 			var buf bytes.Buffer
-			if err := transform(&buf, test.includes, inputs, test.startEndDebugDirectives); err != nil {
+			if err := transform(&buf, test.includes, inputs, test.startEndDebugDirectives, ""); err != nil {
 				t.Fatalf("transform failed: %s", err)
 			}
 
